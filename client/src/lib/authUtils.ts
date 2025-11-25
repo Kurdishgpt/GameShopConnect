@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "./queryClient";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 export interface AuthUser {
   id: string;
@@ -18,7 +18,7 @@ export function isUnauthorizedError(error: Error): boolean {
 }
 
 export function useAuth() {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
