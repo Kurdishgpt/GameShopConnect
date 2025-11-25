@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,7 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Search } from "lucide-react";
+import { ShoppingBag, Search, Trash2, X } from "lucide-react";
+
+interface CartItem extends ShopItem {
+  quantity: number;
+}
 
 export default function Shopping() {
   const { toast } = useToast();
@@ -21,6 +25,8 @@ export default function Shopping() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [requestMessage, setRequestMessage] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -92,6 +98,50 @@ export default function Shopping() {
     }
   };
 
+  const handleAddToCart = (item: ShopItem) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((ci) => ci.id === item.id);
+      if (existingItem) {
+        return prevCart.map((ci) =>
+          ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+      }
+      return [...prevCart, { ...item, quantity: 1 }];
+    });
+    toast({
+      title: "Added to Cart",
+      description: `${item.title} added to your shopping cart`,
+    });
+  };
+
+  const handleRemoveFromCart = (itemId: string) => {
+    setCart((prevCart) => prevCart.filter((ci) => ci.id !== itemId));
+  };
+
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      handleRemoveFromCart(itemId);
+      return;
+    }
+    setCart((prevCart) =>
+      prevCart.map((ci) => (ci.id === itemId ? { ...ci, quantity } : ci))
+    );
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+    setShowCart(false);
+    toast({
+      title: "Cart Cleared",
+      description: "All items have been removed from your cart",
+    });
+  };
+
+  const cartTotal = cart.reduce((sum, item) => {
+    const price = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+    return sum + price * item.quantity;
+  }, 0);
+
   if (authLoading || isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -108,31 +158,34 @@ export default function Shopping() {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="space-y-4">
-        <h1 className="font-heading font-bold text-4xl md:text-5xl flex items-center gap-3" data-testid="heading-shopping">
-          <ShoppingBag className="h-10 w-10 text-primary" />
-          Gaming Shop
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Browse and request the latest gaming gear and accessories
-        </p>
+      <div className="flex flex-col md:flex-row md:items-start gap-6">
+        {/* Main Content */}
+        <div className="flex-1 space-y-6">
+          <div className="space-y-4">
+            <h1 className="font-heading font-bold text-4xl md:text-5xl flex items-center gap-3" data-testid="heading-shopping">
+              <ShoppingBag className="h-10 w-10 text-primary" />
+              Gaming Shop
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Browse and request the latest gaming gear and accessories
+            </p>
 
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-            data-testid="input-search-items"
-          />
-        </div>
-      </div>
+            {/* Search */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-items"
+              />
+            </div>
+          </div>
 
-      {/* Items Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredItems?.map((item) => (
+          {/* Items Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredItems?.map((item) => (
           <Card key={item.id} className="hover-elevate flex flex-col" data-testid={`card-shop-item-${item.id}`}>
             <CardHeader className="pb-3">
               {item.imageUrl ? (
@@ -167,9 +220,17 @@ export default function Shopping() {
                 )}
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="gap-2">
               <Button
-                className="w-full"
+                className="flex-1"
+                variant="outline"
+                onClick={() => handleAddToCart(item)}
+                data-testid={`button-add-cart-${item.id}`}
+              >
+                Add to Cart
+              </Button>
+              <Button
+                className="flex-1"
                 onClick={() => handleRequestClick(item)}
                 data-testid={`button-request-${item.id}`}
               >
@@ -177,16 +238,141 @@ export default function Shopping() {
               </Button>
             </CardFooter>
           </Card>
-        ))}
-      </div>
+            ))}
+          </div>
 
-      {filteredItems?.length === 0 && (
-        <div className="text-center py-12">
-          <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No items found</h3>
-          <p className="text-muted-foreground">Try adjusting your search</p>
+          {filteredItems?.length === 0 && (
+            <div className="text-center py-12">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No items found</h3>
+              <p className="text-muted-foreground">Try adjusting your search</p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Shopping Cart Sidebar */}
+        <div className="md:w-80">
+          <Button
+            variant="outline"
+            className="w-full mb-4 relative"
+            onClick={() => setShowCart(!showCart)}
+            data-testid="button-toggle-cart"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Shopping Cart ({cart.length})
+            {cart.length > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0">
+                {cart.length}
+              </Badge>
+            )}
+          </Button>
+
+          {showCart && (
+            <Card className="sticky top-4" data-testid="panel-shopping-cart">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Your Cart</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCart(false)}
+                    data-testid="button-close-cart"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              {cart.length === 0 ? (
+                <CardContent className="text-center py-6">
+                  <ShoppingBag className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm text-muted-foreground">Your cart is empty</p>
+                </CardContent>
+              ) : (
+                <>
+                  <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+                    {cart.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border rounded-lg p-3 space-y-2"
+                        data-testid={`cart-item-${item.id}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm line-clamp-1">{item.title}</p>
+                            <p className="text-sm text-primary font-bold">{item.price}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            data-testid={`button-remove-${item.id}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            data-testid={`button-qty-minus-${item.id}`}
+                          >
+                            −
+                          </Button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleUpdateQuantity(item.id, parseInt(e.target.value) || 1)
+                            }
+                            className="w-10 h-7 text-center text-sm border rounded"
+                            data-testid={`input-qty-${item.id}`}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            data-testid={`button-qty-plus-${item.id}`}
+                          >
+                            +
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                  <CardFooter className="flex flex-col gap-3 border-t pt-3">
+                    <div className="w-full space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full"
+                      variant="default"
+                      data-testid="button-checkout"
+                    >
+                      Proceed to Checkout
+                    </Button>
+                    <Button
+                      className="w-full"
+                      variant="destructive"
+                      onClick={handleClearCart}
+                      data-testid="button-clear-cart"
+                    >
+                      Clear Cart
+                    </Button>
+                  </CardFooter>
+                </>
+              )}
+            </Card>
+          )}
+        </div>
+      </div>
 
       {/* Request Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
