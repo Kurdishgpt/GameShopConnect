@@ -27,10 +27,10 @@ export default function Landing() {
               size="lg"
               variant="default"
               className="text-lg px-8 py-6 font-semibold"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => window.location.href = '/api/auth/google'}
               data-testid="button-login"
             >
-              Get Started
+              Sign in with Google
             </Button>
           </div>
 

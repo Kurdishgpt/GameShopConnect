@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./googleAuth";
 import { 
   updateProfileSchema, 
   insertShopItemSchema, 
@@ -12,13 +12,13 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup Replit Auth middleware
+  // Setup Google Auth middleware
   await setupAuth(app);
 
   // ===== AUTH ROUTES =====
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PROFILE ROUTES =====
   app.patch('/api/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const validatedData = updateProfileSchema.parse(req.body);
       const user = await storage.updateUserProfile(userId, validatedData);
       res.json(user);
@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/shop/requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const validatedData = insertShopRequestSchema.parse(req.body);
       const request = await storage.createShopRequest({ ...validatedData, userId });
       res.json(request);
@@ -87,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/shop/requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const requests = await storage.getUserShopRequests(userId);
       res.json(requests);
     } catch (error) {
@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PLAY REQUEST ROUTES =====
   app.post('/api/play-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const fromUserId = req.user.claims.sub;
+      const fromUserId = req.user?.id;
       const validatedData = insertPlayRequestSchema.parse(req.body);
       const request = await storage.createPlayRequest({ ...validatedData, fromUserId });
       res.json(request);
@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/play-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const requests = await storage.getUserPlayRequests(userId);
       res.json(requests);
     } catch (error) {
@@ -138,7 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== MESSAGE ROUTES =====
   app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/messages/:otherUserId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const { otherUserId } = req.params;
       const messages = await storage.getMessages(userId, otherUserId);
       res.json(messages);
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/messages', isAuthenticated, async (req: any, res) => {
     try {
-      const fromUserId = req.user.claims.sub;
+      const fromUserId = req.user?.id;
       const validatedData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage({ ...validatedData, fromUserId });
       res.json(message);
@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/stories', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
       const validatedData = insertVideoStorySchema.parse(req.body);
       const story = await storage.createVideoStory({ ...validatedData, userId });
       res.json(story);
