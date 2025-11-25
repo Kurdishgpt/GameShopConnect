@@ -175,8 +175,8 @@ export const signupSchema = z.object({
   password: z.string().min(6),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  email: z.string().email().optional(),
-  birthDate: z.string().datetime().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  birthDate: z.string().refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), "Invalid date format").optional().or(z.literal("")),
   gender: z.enum(['male', 'female', 'other']).optional(),
 });
 

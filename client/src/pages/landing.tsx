@@ -25,28 +25,24 @@ export default function Landing() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
             <Link href="/login">
-              <a>
-                <Button
-                  size="lg"
-                  variant="default"
-                  className="text-lg px-8 py-6 font-semibold"
-                  data-testid="button-login"
-                >
-                  Sign In
-                </Button>
-              </a>
+              <Button
+                size="lg"
+                variant="default"
+                className="text-lg px-8 py-6 font-semibold cursor-pointer"
+                data-testid="button-login"
+              >
+                Sign In
+              </Button>
             </Link>
             <Link href="/signup">
-              <a>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-8 py-6 font-semibold"
-                  data-testid="button-signup"
-                >
-                  Sign Up
-                </Button>
-              </a>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 py-6 font-semibold cursor-pointer"
+                data-testid="button-signup"
+              >
+                Sign Up
+              </Button>
             </Link>
           </div>
 
