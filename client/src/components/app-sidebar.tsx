@@ -1,11 +1,16 @@
-import { Home, ShoppingBag, Users, Video } from "lucide-react";
+import { useState } from "react";
+import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,6 +18,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
@@ -22,16 +36,59 @@ const menuItems = [
 ];
 
 const roleConfig = {
-  owner: { label: "Owner", color: "bg-chart-5 text-white" },
-  admin: { label: "Admin", color: "bg-chart-1 text-white" },
-  media: { label: "Media", color: "bg-chart-2 text-white" },
-  developer: { label: "Developer", color: "bg-chart-3 text-white" },
-  player: { label: "Player", color: "bg-chart-4 text-white" },
+  owner: { label: "Owner", color: "bg-chart-5 text-white", icon: Crown },
+  admin: { label: "Admin", color: "bg-chart-1 text-white", icon: Shield },
+  media: { label: "Media", color: "bg-chart-2 text-white", icon: Camera },
+  developer: { label: "Developer", color: "bg-chart-3 text-white", icon: Code },
+  player: { label: "Player", color: "bg-chart-4 text-white", icon: Gamepad2 },
 };
+
+const roles = ["owner", "admin", "media", "developer", "player"] as const;
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [password, setPassword] = useState("");
+
+  const roleUpdateMutation = useMutation({
+    mutationFn: async (newRole: string) => {
+      const response = await apiRequest("PATCH", "/api/profile/role", { role: newRole, password });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Role updated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsDialogOpen(false);
+      setPassword("");
+      setSelectedRole(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update role",
+        variant: "destructive",
+      });
+      setPassword("");
+    },
+  });
+
+  const handleRoleSelect = (role: string) => {
+    setSelectedRole(role);
+    setIsDialogOpen(true);
+    setPassword("");
+  };
+
+  const handleConfirmRole = () => {
+    if (!selectedRole) return;
+    roleUpdateMutation.mutate(selectedRole);
+  };
 
   const getRoleBadge = () => {
     if (!user?.role) return null;
@@ -72,6 +129,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2">
+        {/* Navigation Menu */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -91,7 +149,74 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Role Selection */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Select Role</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="grid grid-cols-2 gap-2">
+              {roles.map((role) => {
+                const config = roleConfig[role];
+                const RoleIcon = config.icon;
+                const isActive = user?.role === role;
+                return (
+                  <Button
+                    key={role}
+                    onClick={() => handleRoleSelect(role)}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className="flex flex-col items-center gap-1 h-auto py-2 px-2"
+                    data-testid={`button-role-${role}`}
+                  >
+                    <RoleIcon className="h-4 w-4" />
+                    <span className="text-xs font-semibold">{config.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
+
+      {/* Password Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent data-testid="dialog-role-password">
+          <DialogHeader>
+            <DialogTitle>Enter Password for Role</DialogTitle>
+            <DialogDescription>
+              Enter the password to select <span className="font-semibold">{selectedRole && roleConfig[selectedRole as keyof typeof roleConfig]?.label}</span> role
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleConfirmRole();
+              }}
+              data-testid="input-role-password"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                data-testid="button-cancel-role"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmRole}
+                disabled={!password || roleUpdateMutation.isPending}
+                data-testid="button-confirm-role"
+              >
+                {roleUpdateMutation.isPending ? "Updating..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

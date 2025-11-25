@@ -37,6 +37,7 @@ export interface IStorage {
   }): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, profile: UpdateProfile): Promise<User>;
+  updateUserRole(id: string, role: string): Promise<User>;
   getAllPlayers(): Promise<User[]>;
 
   // Shop operations
@@ -131,6 +132,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ ...profile, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role: role as any, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;

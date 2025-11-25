@@ -84,6 +84,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ROLE UPDATE ROUTES =====
+  app.patch('/api/profile/role', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { role, password } = req.body;
+
+      // Verify password
+      const ROLE_PASSWORD = "client_look";
+      if (password !== ROLE_PASSWORD) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+
+      // Validate role
+      const validRoles = ["owner", "admin", "media", "developer", "player"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      // Update user role
+      const user = await storage.updateUserRole(userId, role);
+      res.json(user);
+    } catch (error: any) {
+      console.error("Error updating role:", error);
+      res.status(400).json({ message: error.message || "Failed to update role" });
+    }
+  });
+
   // ===== PLAYER ROUTES =====
   app.get('/api/players', isAuthenticated, async (req, res) => {
     try {
