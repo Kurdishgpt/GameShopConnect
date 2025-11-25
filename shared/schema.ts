@@ -198,6 +198,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   selectedPlatform: true,
   bio: true,
   favoriteGames: true,
+  profileImageUrl: true,
 });
 
 export const insertShopItemSchema = createInsertSchema(shopItems).omit({ id: true, createdAt: true });

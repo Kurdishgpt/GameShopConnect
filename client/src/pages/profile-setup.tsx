@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from "wouter";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Camera } from "lucide-react";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20),
@@ -30,6 +32,7 @@ export default function ProfileSetup() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImageUrl || null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -56,6 +59,38 @@ export default function ProfileSetup() {
     },
   });
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result;
+      if (typeof result === "string") {
+        setProfileImage(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const mutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
       const payload = {
@@ -63,6 +98,7 @@ export default function ProfileSetup() {
         favoriteGames: data.favoriteGames
           ? data.favoriteGames.split(",").map((g) => g.trim()).filter(Boolean)
           : [],
+        profileImageUrl: profileImage,
       };
       await apiRequest("PATCH", "/api/profile", payload);
     },
@@ -124,6 +160,35 @@ export default function ProfileSetup() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Profile Photo Upload */}
+                <div className="flex flex-col items-center gap-4 p-6 bg-muted rounded-lg border-2 border-dashed">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={profileImage || undefined} alt="Profile" />
+                    <AvatarFallback>
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                    <label
+                      htmlFor="profile-photo"
+                      className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                      data-testid="button-upload-photo"
+                    >
+                      <Camera className="h-4 w-4" />
+                      Upload Photo
+                    </label>
+                    <input
+                      id="profile-photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      data-testid="input-profile-photo"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">JPG, PNG or GIF (Max 5MB)</p>
+                  </div>
+                </div>
+
                 <FormField
                   control={form.control}
                   name="username"
