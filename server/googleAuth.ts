@@ -46,14 +46,29 @@ export async function setupAuth(app: Express) {
 
   // Only set up Google Strategy if credentials are provided
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    // Determine the correct callback URL based on environment
+    let callbackURL: string;
+    
+    if (process.env.REPLIT_DOMAINS) {
+      // Extract the first domain from REPLIT_DOMAINS (comma-separated list)
+      const replitDomain = process.env.REPLIT_DOMAINS.split(",")[0].trim();
+      callbackURL = `https://${replitDomain}/api/auth/google/callback`;
+    } else if (process.env.NODE_ENV === "production") {
+      // Production fallback - should have REPLIT_DEPLOYMENT
+      callbackURL = `https://${process.env.REPLIT_DEPLOYMENT}/api/auth/google/callback`;
+    } else {
+      // Development fallback
+      callbackURL = `http://localhost:5000/api/auth/google/callback`;
+    }
+
+    console.log("Google OAuth callback URL:", callbackURL);
 
     passport.use(
       new GoogleStrategy(
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: `${protocol}://${process.env.REPLIT_DEPLOYMENT || "localhost:5000"}/api/auth/google/callback`,
+          callbackURL,
         },
         async (accessToken, refreshToken, profile, done) => {
           try {
