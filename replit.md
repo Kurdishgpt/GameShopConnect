@@ -12,12 +12,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Features Added
 
-**Role Management System (Latest)**
+**Owner Shop Management (Latest)**
+- Owners can add new gaming gear items to the shop via "Sell Items" page
+- Owner-only sidebar menu with "Sell Items" link
+- Form to add item title, description, price, category, and image URL
+- Live inventory display showing all shop items
+- Backend endpoint `/api/shop/items` with owner-only access control
+
+**Role Management System**
 - Role selection buttons in sidebar with password protection (password: `client_look`)
 - Owners can manage and assign roles to other players via "Manage Players" page
 - Owner-only sidebar menu with "Manage Players" link
 - Test player account created: `testplayer` / `test123`
 - Backend endpoint `/api/admin/assign-role` for owner role assignment
+
+**Shopping Cart Features**
+- "Clear Cart" button visible in shopping sidebar
+- Add to cart, quantity controls, remove items
+- Cart summary with subtotal calculation
+- Shopping cart sidebar stays visible while browsing items
 
 ## System Architecture
 

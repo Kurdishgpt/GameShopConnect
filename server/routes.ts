@@ -159,8 +159,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shop/items', isAuthenticated, async (req, res) => {
+  app.post('/api/shop/items', isAuthenticated, async (req: any, res) => {
     try {
+      const currentUser = req.user;
+
+      // Check if current user is owner
+      if (currentUser?.role !== 'owner') {
+        return res.status(403).json({ message: "Only owners can add items to the shop" });
+      }
+
       const validatedData = insertShopItemSchema.parse(req.body);
       const item = await storage.createShopItem(validatedData);
       res.json(item);

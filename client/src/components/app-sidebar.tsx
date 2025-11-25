@@ -37,6 +37,7 @@ const menuItems = [
 
 const ownerMenuItems = [
   { title: "Manage Players", url: "/manage-players", icon: Shield },
+  { title: "Sell Items", url: "/sell-items", icon: ShoppingBag },
 ];
 
 const roleConfig = {
