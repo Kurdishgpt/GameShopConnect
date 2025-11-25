@@ -30,7 +30,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table - Required for Replit Auth
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -40,9 +40,16 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   
+  // Authentication fields
+  username: varchar("username").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  
+  // Profile fields
+  birthDate: timestamp("birth_date"),
+  gender: varchar("gender"), // 'male', 'female', 'other'
+  
   // Gaming platform fields
   role: userRole("role").notNull().default('player'),
-  username: varchar("username").unique(),
   age: integer("age"),
   selectedPlatform: platform("selected_platform"),
   bio: text("bio"),
@@ -163,6 +170,21 @@ export const videoStoriesRelations = relations(videoStories, ({ one }) => ({
 }));
 
 // Zod schemas for validation
+export const signupSchema = z.object({
+  username: z.string().min(3).max(20),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email().optional(),
+  birthDate: z.string().datetime().optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+});
+
+export const loginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,
@@ -172,7 +194,6 @@ export const upsertUserSchema = createInsertSchema(users).pick({
 });
 
 export const updateProfileSchema = createInsertSchema(users).pick({
-  username: true,
   age: true,
   selectedPlatform: true,
   bio: true,

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import candyBg from "@assets/IMG_1163_1764100879916.jpg";
 
 export default function Landing() {
@@ -23,15 +24,30 @@ export default function Landing() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button
-              size="lg"
-              variant="default"
-              className="text-lg px-8 py-6 font-semibold"
-              onClick={() => window.location.href = '/api/auth/google'}
-              data-testid="button-login"
-            >
-              Sign in with Google
-            </Button>
+            <Link href="/login">
+              <a>
+                <Button
+                  size="lg"
+                  variant="default"
+                  className="text-lg px-8 py-6 font-semibold"
+                  data-testid="button-login"
+                >
+                  Sign In
+                </Button>
+              </a>
+            </Link>
+            <Link href="/signup">
+              <a>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8 py-6 font-semibold"
+                  data-testid="button-signup"
+                >
+                  Sign Up
+                </Button>
+              </a>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 max-w-3xl mx-auto">

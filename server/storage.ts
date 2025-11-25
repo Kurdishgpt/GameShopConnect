@@ -23,8 +23,18 @@ import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations - Required for Replit Auth
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(data: {
+    username: string;
+    passwordHash: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    birthDate?: Date;
+    gender?: string;
+  }): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, profile: UpdateProfile): Promise<User>;
   getAllPlayers(): Promise<User[]>;
@@ -52,9 +62,38 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations - Required for Replit Auth
+  // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(data: {
+    username: string;
+    passwordHash: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    birthDate?: Date;
+    gender?: string;
+  }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        username: data.username,
+        passwordHash: data.passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || null,
+        birthDate: data.birthDate || null,
+        gender: data.gender || null,
+      })
+      .returning();
     return user;
   }
 
