@@ -191,7 +191,7 @@ export const upsertUserSchema = createInsertSchema(users).pick({
   firstName: true,
   lastName: true,
   profileImageUrl: true,
-});
+}).partial();
 
 export const updateProfileSchema = createInsertSchema(users).pick({
   age: true,

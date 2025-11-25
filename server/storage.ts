@@ -98,15 +98,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Check if user exists
+    if (userData.id) {
+      const existing = await this.getUser(userData.id);
+      if (existing) {
+        // User exists, update only provided fields
+        const [user] = await db
+          .update(users)
+          .set({ ...userData, updatedAt: new Date() })
+          .where(eq(users.id, userData.id))
+          .returning();
+        return user;
+      }
+    }
+    
+    // For new users from OAuth, provide defaults for required fields
     const [user] = await db
       .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
+      .values({
+        ...userData,
+        username: userData.firstName && userData.lastName 
+          ? `${userData.firstName.toLowerCase()}-${userData.lastName.toLowerCase()}`
+          : `user-${Math.random().toString(36).substr(2, 9)}`,
+        passwordHash: 'oauth-user',
+        role: 'player',
       })
       .returning();
     return user;

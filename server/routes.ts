@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Log user in after signup
-      req.login(user, (err) => {
+      req.login(user, (err: Error | null) => {
         if (err) {
           return res.status(500).json({ message: "Login failed after signup" });
         }
