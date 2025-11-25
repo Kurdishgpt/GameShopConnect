@@ -14,6 +14,7 @@ import Shopping from "@/pages/shopping";
 import FindPlayer from "@/pages/find-player";
 import Stories from "@/pages/stories";
 import Messages from "@/pages/messages";
+import ManagePlayers from "@/pages/manage-players";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -68,6 +69,7 @@ function Router() {
               <Route path="/find-player" component={FindPlayer} />
               <Route path="/stories" component={Stories} />
               <Route path="/messages" component={Messages} />
+              <Route path="/manage-players" component={ManagePlayers} />
               <Route component={NotFound} />
             </Switch>
           </main>

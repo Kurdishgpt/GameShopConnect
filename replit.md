@@ -10,6 +10,15 @@ The platform emphasizes a vibrant, gaming-first design with dark mode aesthetics
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Features Added
+
+**Role Management System (Latest)**
+- Role selection buttons in sidebar with password protection (password: `client_look`)
+- Owners can manage and assign roles to other players via "Manage Players" page
+- Owner-only sidebar menu with "Manage Players" link
+- Test player account created: `testplayer` / `test123`
+- Backend endpoint `/api/admin/assign-role` for owner role assignment
+
 ## System Architecture
 
 ### Frontend Architecture

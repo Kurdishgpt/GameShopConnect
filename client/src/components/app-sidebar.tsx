@@ -35,6 +35,10 @@ const menuItems = [
   { title: "Stories", url: "/stories", icon: Video },
 ];
 
+const ownerMenuItems = [
+  { title: "Manage Players", url: "/manage-players", icon: Shield },
+];
+
 const roleConfig = {
   owner: { label: "Owner", color: "bg-chart-5 text-white", icon: Crown },
   admin: { label: "Admin", color: "bg-chart-1 text-white", icon: Shield },
@@ -146,6 +150,25 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Owner-only menu */}
+              {user?.role === "owner" && (
+                <>
+                  {ownerMenuItems.map((item) => {
+                    const isActive = location === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive} data-testid={`link-${item.title.toLowerCase().replace(" ", "-")}`}>
+                          <Link href={item.url}>
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

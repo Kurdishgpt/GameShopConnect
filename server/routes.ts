@@ -111,6 +111,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== OWNER ROLE ASSIGNMENT =====
+  app.patch('/api/admin/assign-role', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = req.user;
+      const { targetUserId, role } = req.body;
+
+      // Check if current user is owner
+      if (currentUser?.role !== 'owner') {
+        return res.status(403).json({ message: "Only owners can assign roles" });
+      }
+
+      // Validate role
+      const validRoles = ["owner", "admin", "media", "developer", "player"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      // Update target user role
+      const targetUser = await storage.updateUserRole(targetUserId, role);
+      res.json(targetUser);
+    } catch (error: any) {
+      console.error("Error assigning role:", error);
+      res.status(400).json({ message: error.message || "Failed to assign role" });
+    }
+  });
+
   // ===== PLAYER ROUTES =====
   app.get('/api/players', isAuthenticated, async (req, res) => {
     try {
