@@ -205,8 +205,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const fromUserId = req.user?.id;
       const { toUserId, game, message } = req.body;
-      const validatedData = insertPlayRequestSchema.parse({ toUserId, game, message });
-      const request = await storage.createPlayRequest({ ...validatedData, fromUserId });
+      
+      // Validate request body (without fromUserId which is provided by auth)
+      const bodySchema = z.object({
+        toUserId: z.string().min(1),
+        game: z.string().min(1),
+        message: z.string().optional(),
+      });
+      const validatedBody = bodySchema.parse({ toUserId, game, message });
+      const request = await storage.createPlayRequest({ ...validatedBody, fromUserId });
       res.json(request);
     } catch (error: any) {
       console.error("Error creating play request:", error);
