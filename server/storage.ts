@@ -317,6 +317,34 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return story;
   }
+
+  // Notification operations
+  async createNotification(notification: InsertNotification & { userId: string }): Promise<Notification> {
+    const [notif] = await db.insert(notifications).values(notification).returning();
+    return notif;
+  }
+
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    const notifs = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+    return notifs;
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await db.delete(notifications).where(eq(notifications.id, id));
+  }
+
+  async markNotificationRead(id: string): Promise<Notification> {
+    const [notif] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return notif;
+  }
 }
 
 export const storage = new DatabaseStorage();

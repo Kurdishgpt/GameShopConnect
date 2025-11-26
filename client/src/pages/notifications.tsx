@@ -12,10 +12,11 @@ export default function Notifications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [] } = useQuery({
+  const { data: notificationsData } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     enabled: isAuthenticated,
   });
+  const notifications = notificationsData || [];
 
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: string) => {

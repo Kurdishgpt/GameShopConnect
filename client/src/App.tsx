@@ -26,49 +26,6 @@ import { LogOut, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
-function HeaderWithNotifications() {
-  const [, navigate] = useLocation();
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["/api/notifications"],
-  });
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
-
-  return (
-    <header className="flex items-center justify-between p-4 border-b bg-background">
-      <SidebarTrigger data-testid="button-sidebar-toggle" />
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate("/notifications")}
-          className="relative"
-          data-testid="button-notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              data-testid="badge-unread-count"
-            >
-              {unreadCount}
-            </Badge>
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.location.href = '/api/logout'}
-          data-testid="button-logout"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
-      </div>
-    </header>
-  );
-}
-
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -115,6 +72,50 @@ function Router() {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function HeaderWithNotifications() {
+  const [, navigate] = useLocation();
+  const { data: notificationsData } = useQuery<any[]>({
+    queryKey: ["/api/notifications"],
+  });
+  const notifications = notificationsData || [];
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return (
+    <header className="flex items-center justify-between p-4 border-b bg-background">
+      <SidebarTrigger data-testid="button-sidebar-toggle" />
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/notifications")}
+          className="relative"
+          data-testid="button-notifications"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              data-testid="badge-unread-count"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.location.href = '/api/logout'}
+          data-testid="button-logout"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </header>
   );
 }
 

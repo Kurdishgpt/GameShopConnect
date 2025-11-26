@@ -204,7 +204,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/play-requests', isAuthenticated, async (req: any, res) => {
     try {
       const fromUserId = req.user?.id;
-      const validatedData = insertPlayRequestSchema.parse(req.body);
+      const { toUserId, game, message } = req.body;
+      const validatedData = insertPlayRequestSchema.parse({ toUserId, game, message });
       const request = await storage.createPlayRequest({ ...validatedData, fromUserId });
       res.json(request);
     } catch (error: any) {
@@ -306,6 +307,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error liking story:", error);
       res.status(400).json({ message: error.message || "Failed to like story" });
+    }
+  });
+
+  // ===== NOTIFICATION ROUTES =====
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const notifs = await storage.getUserNotifications(userId);
+      res.json(notifs);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.delete('/api/notifications/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteNotification(id);
+      res.json({ message: "Notification deleted" });
+    } catch (error: any) {
+      console.error("Error deleting notification:", error);
+      res.status(400).json({ message: error.message || "Failed to delete notification" });
+    }
+  });
+
+  app.patch('/api/notifications/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const notif = await storage.markNotificationRead(id);
+      res.json(notif);
+    } catch (error: any) {
+      console.error("Error marking notification as read:", error);
+      res.status(400).json({ message: error.message || "Failed to mark notification as read" });
     }
   });
 
