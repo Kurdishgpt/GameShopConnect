@@ -171,20 +171,20 @@ export default function Shopping() {
             </p>
 
             {/* Search */}
-            <div className="relative max-w-md">
+            <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
                 data-testid="input-search-items"
               />
             </div>
           </div>
 
           {/* Items Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems?.map((item) => (
           <Card key={item.id} className="hover-elevate flex flex-col" data-testid={`card-shop-item-${item.id}`}>
             <CardHeader className="pb-3">
@@ -251,7 +251,7 @@ export default function Shopping() {
         </div>
 
         {/* Shopping Cart Sidebar */}
-        <div className="md:w-80 space-y-2">
+        <div className="w-full md:w-96 space-y-2">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -281,7 +281,7 @@ export default function Shopping() {
           </div>
 
           {showCart && (
-            <Card className="sticky top-4" data-testid="panel-shopping-cart">
+            <Card className="sticky top-0 md:top-4 z-40" data-testid="panel-shopping-cart">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Your Cart</CardTitle>

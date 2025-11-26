@@ -78,8 +78,32 @@ export default function SellItems() {
     },
   });
 
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      return await apiRequest("DELETE", `/api/shop/items/${itemId}`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Item deleted successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/items"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete item",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: AddItemFormData) => {
     addItemMutation.mutate(data);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    deleteItemMutation.mutate(itemId);
   };
 
   if (isLoading) {
@@ -226,7 +250,7 @@ export default function SellItems() {
                     items.map((item: any) => (
                       <div
                         key={item.id}
-                        className="flex items-start justify-between p-3 border rounded-lg hover-elevate"
+                        className="flex items-start justify-between gap-3 p-3 border rounded-lg hover-elevate"
                         data-testid={`item-card-${item.id}`}
                       >
                         <div className="flex-1 min-w-0">
@@ -245,6 +269,16 @@ export default function SellItems() {
                             )}
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteItem(item.id)}
+                          disabled={deleteItemMutation.isPending}
+                          data-testid={`button-delete-item-${item.id}`}
+                          className="text-destructive hover:text-destructive flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))
                   ) : (
