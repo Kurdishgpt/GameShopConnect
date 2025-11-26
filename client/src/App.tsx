@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Animated3DBackground } from "@/components/animated-3d-background";
 import { useAuth } from "@/hooks/useAuth";
 
 import Landing from "@/pages/landing";
@@ -124,7 +123,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Animated3DBackground />
         <Toaster />
         <Router />
       </TooltipProvider>
