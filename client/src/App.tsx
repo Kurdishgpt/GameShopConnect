@@ -16,11 +16,58 @@ import Stories from "@/pages/stories";
 import Messages from "@/pages/messages";
 import ManagePlayers from "@/pages/manage-players";
 import SellItems from "@/pages/sell-items";
+import Notifications from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LogOut, Bell } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+
+function HeaderWithNotifications() {
+  const [, navigate] = useLocation();
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["/api/notifications"],
+  });
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
+
+  return (
+    <header className="flex items-center justify-between p-4 border-b bg-background">
+      <SidebarTrigger data-testid="button-sidebar-toggle" />
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/notifications")}
+          className="relative"
+          data-testid="button-notifications"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              data-testid="badge-unread-count"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.location.href = '/api/logout'}
+          data-testid="button-logout"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </header>
+  );
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -50,18 +97,7 @@ function Router() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between p-4 border-b bg-background">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.location.href = '/api/logout'}
-              data-testid="button-logout"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </header>
+          <HeaderWithNotifications />
           <main className="flex-1 overflow-auto">
             <Switch>
               <Route path="/" component={Home} />
@@ -72,6 +108,7 @@ function Router() {
               <Route path="/messages" component={Messages} />
               <Route path="/manage-players" component={ManagePlayers} />
               <Route path="/sell-items" component={SellItems} />
+              <Route path="/notifications" component={Notifications} />
               <Route component={NotFound} />
             </Switch>
           </main>

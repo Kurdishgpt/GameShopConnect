@@ -111,6 +111,17 @@ export const videoStories = pgTable("video_stories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  message: text("message"),
+  type: varchar("type").notNull(), // 'message', 'request', 'shop', 'play'
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   shopRequests: many(shopRequests),
@@ -169,6 +180,13 @@ export const videoStoriesRelations = relations(videoStories, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod schemas for validation
 export const signupSchema = z.object({
   username: z.string().min(3).max(20),
@@ -211,6 +229,8 @@ export const insertMessageSchema = createInsertSchema(messages).omit({ id: true,
 
 export const insertVideoStorySchema = createInsertSchema(videoStories).omit({ id: true, createdAt: true, likes: true });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, read: true });
+
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -230,3 +250,6 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type VideoStory = typeof videoStories.$inferSelect;
 export type InsertVideoStory = z.infer<typeof insertVideoStorySchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

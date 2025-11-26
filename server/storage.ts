@@ -5,6 +5,7 @@ import {
   playRequests,
   messages,
   videoStories,
+  notifications,
   type User,
   type UpsertUser,
   type UpdateProfile,
@@ -18,6 +19,8 @@ import {
   type InsertMessage,
   type VideoStory,
   type InsertVideoStory,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -60,6 +63,12 @@ export interface IStorage {
   createVideoStory(story: InsertVideoStory & { userId: string }): Promise<VideoStory>;
   getAllVideoStories(): Promise<any[]>;
   likeVideoStory(id: string): Promise<VideoStory>;
+
+  // Notification operations
+  createNotification(notification: InsertNotification & { userId: string }): Promise<Notification>;
+  getUserNotifications(userId: string): Promise<Notification[]>;
+  deleteNotification(id: string): Promise<void>;
+  markNotificationRead(id: string): Promise<Notification>;
 }
 
 export class DatabaseStorage implements IStorage {
