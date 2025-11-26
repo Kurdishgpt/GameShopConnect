@@ -251,21 +251,34 @@ export default function Shopping() {
         </div>
 
         {/* Shopping Cart Sidebar */}
-        <div className="md:w-80">
-          <Button
-            variant="outline"
-            className="w-full mb-4 relative"
-            onClick={() => setShowCart(!showCart)}
-            data-testid="button-toggle-cart"
-          >
-            <ShoppingBag className="h-4 w-4 mr-2" />
-            Shopping Cart ({cart.length})
+        <div className="md:w-80 space-y-2">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 relative"
+              onClick={() => setShowCart(!showCart)}
+              data-testid="button-toggle-cart"
+            >
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              Shopping Cart ({cart.length})
+              {cart.length > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0">
+                  {cart.length}
+                </Badge>
+              )}
+            </Button>
             {cart.length > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0">
-                {cart.length}
-              </Badge>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleClearCart}
+                data-testid="button-clear-all-items"
+                title="Remove all items from cart"
+              >
+                Clear All
+              </Button>
             )}
-          </Button>
+          </div>
 
           {showCart && (
             <Card className="sticky top-4" data-testid="panel-shopping-cart">
