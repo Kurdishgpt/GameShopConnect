@@ -170,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = insertShopItemSchema.parse(req.body);
-      const item = await storage.createShopItem(validatedData);
+      const item = await storage.createShopItem({ ...validatedData, ownerId: currentUser.id });
       res.json(item);
     } catch (error: any) {
       console.error("Error creating shop item:", error);
@@ -199,8 +199,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/shop/requests', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const currentUser = req.user;
       const validatedData = insertShopRequestSchema.parse(req.body);
       const request = await storage.createShopRequest({ ...validatedData, userId });
+      
+      // Get the shop item to find the owner
+      const item = await storage.getShopItem(validatedData.itemId);
+      if (item && item.ownerId) {
+        const username = currentUser?.username || currentUser?.firstName || "A player";
+        await storage.createNotification({
+          userId: item.ownerId,
+          title: `New Shop Request for ${item.title}`,
+          message: `${username} requested to buy ${item.title}`,
+          type: 'shop',
+        });
+      }
+      
       res.json(request);
     } catch (error: any) {
       console.error("Error creating shop request:", error);
@@ -223,6 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/play-requests', isAuthenticated, async (req: any, res) => {
     try {
       const fromUserId = req.user?.id;
+      const fromUser = req.user;
       const { toUserId, game, message } = req.body;
       
       // Validate request body (without fromUserId which is provided by auth)
@@ -233,6 +248,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const validatedBody = bodySchema.parse({ toUserId, game, message });
       const request = await storage.createPlayRequest({ ...validatedBody, fromUserId });
+      
+      // Create notification for the recipient
+      const username = fromUser?.username || fromUser?.firstName || "A player";
+      await storage.createNotification({
+        userId: toUserId,
+        title: `New Play Request from ${username}`,
+        message: `${username} wants to play ${game} with you`,
+        type: 'play',
+      });
+      
       res.json(request);
     } catch (error: any) {
       console.error("Error creating play request:", error);

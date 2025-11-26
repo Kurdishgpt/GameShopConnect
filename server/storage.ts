@@ -45,7 +45,8 @@ export interface IStorage {
 
   // Shop operations
   getAllShopItems(): Promise<ShopItem[]>;
-  createShopItem(item: InsertShopItem): Promise<ShopItem>;
+  getShopItem(id: string): Promise<ShopItem | undefined>;
+  createShopItem(item: InsertShopItem & { ownerId: string }): Promise<ShopItem>;
   deleteShopItem(id: string): Promise<void>;
   createShopRequest(request: InsertShopRequest & { userId: string }): Promise<ShopRequest>;
   getUserShopRequests(userId: string): Promise<ShopRequest[]>;
@@ -165,7 +166,12 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(shopItems).orderBy(desc(shopItems.createdAt));
   }
 
-  async createShopItem(item: InsertShopItem): Promise<ShopItem> {
+  async getShopItem(id: string): Promise<ShopItem | undefined> {
+    const [item] = await db.select().from(shopItems).where(eq(shopItems.id, id));
+    return item;
+  }
+
+  async createShopItem(item: InsertShopItem & { ownerId: string }): Promise<ShopItem> {
     const [shopItem] = await db.insert(shopItems).values(item).returning();
     return shopItem;
   }

@@ -60,6 +60,7 @@ export const users = pgTable("users", {
 // Shopping items table
 export const shopItems = pgTable("shop_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
   title: varchar("title").notNull(),
   description: text("description"),
   price: varchar("price").notNull(),
@@ -219,7 +220,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   profileImageUrl: true,
 });
 
-export const insertShopItemSchema = createInsertSchema(shopItems).omit({ id: true, createdAt: true });
+export const insertShopItemSchema = createInsertSchema(shopItems).omit({ id: true, createdAt: true, ownerId: true });
 
 export const insertShopRequestSchema = createInsertSchema(shopRequests).omit({ id: true, createdAt: true, status: true });
 
