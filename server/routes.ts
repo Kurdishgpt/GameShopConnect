@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import passport from "passport";
+import { z } from "zod";
 import { 
   signupSchema,
   loginSchema,
