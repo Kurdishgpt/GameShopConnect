@@ -173,17 +173,9 @@
 
   body {
     @apply font-sans antialiased text-foreground;
-    background-image: url('/assets/generated_images/premium_call_of_duty_tactical_gaming_aesthetic_background.png');
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
   }
 
   html {
-    background-image: url('/assets/generated_images/premium_call_of_duty_tactical_gaming_aesthetic_background.png');
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
   }
 }
 
