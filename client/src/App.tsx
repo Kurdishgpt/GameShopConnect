@@ -51,11 +51,11 @@ function Router() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-black/40">
+      <div className="flex h-screen w-full bg-white dark:bg-background">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <HeaderWithNotifications />
-          <main className="flex-1 overflow-auto bg-gradient-to-b from-black/20 via-black/40 to-black/50">
+          <main className="flex-1 overflow-auto bg-white dark:bg-background">
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/profile-setup" component={ProfileSetup} />
