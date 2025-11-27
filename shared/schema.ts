@@ -64,6 +64,7 @@ export const shopItems = pgTable("shop_items", {
   title: varchar("title").notNull(),
   description: text("description"),
   price: varchar("price").notNull(),
+  currency: varchar("currency").notNull().default('USD'), // USD, IQD
   imageUrl: varchar("image_url"),
   category: varchar("category"),
   createdAt: timestamp("created_at").defaultNow(),

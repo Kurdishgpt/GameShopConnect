@@ -210,9 +210,14 @@ export default function Shopping() {
             </CardHeader>
             <CardContent className="pb-3 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-primary" data-testid={`text-item-price-${item.id}`}>
-                  {item.price}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold text-primary" data-testid={`text-item-price-${item.id}`}>
+                    {item.price}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {(item as any).currency || 'USD'}
+                  </span>
+                </div>
                 {item.category && (
                   <Badge variant="secondary" className="text-xs">
                     {item.category}
@@ -313,7 +318,7 @@ export default function Shopping() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="font-semibold text-sm line-clamp-1">{item.title}</p>
-                            <p className="text-sm text-primary font-bold">{item.price}</p>
+                            <p className="text-sm text-primary font-bold">{item.price} {(item as any).currency || 'USD'}</p>
                           </div>
                           <Button
                             variant="ghost"

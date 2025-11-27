@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import type { Feedback } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +16,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, Star, Send } from "lucide-react";
+import { MessageSquare, Star, Send, Search, Filter } from "lucide-react";
 
 export default function Feedback() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [showIssues, setShowIssues] = useState(false);
   
   const [feedbackType, setFeedbackType] = useState("general");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -40,6 +44,18 @@ export default function Feedback() {
       return;
     }
   }, [isAuthenticated, authLoading, toast]);
+
+  const { data: allFeedback = [] } = useQuery<Feedback[]>({
+    queryKey: ["/api/feedback"],
+    enabled: isAuthenticated,
+  });
+
+  const filteredFeedback = allFeedback.filter((item) => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === "all" || item.type === filterType;
+    return matchesSearch && matchesType;
+  });
 
   const submitMutation = useMutation({
     mutationFn: async (data: { type: string; rating: number; title: string; message: string }) => {
@@ -211,6 +227,93 @@ export default function Feedback() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Toggle Issues View */}
+        <Button
+          onClick={() => setShowIssues(!showIssues)}
+          variant="outline"
+          className="mx-auto"
+          data-testid="button-toggle-issues"
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          {showIssues ? "Hide" : "View"} All Issues & Feedback
+        </Button>
+
+        {showIssues && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Issues & Feedback
+              </CardTitle>
+              <CardDescription>Search and filter through reported issues and feedback</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Search and Filter */}
+              <div className="space-y-3">
+                <Input
+                  placeholder="Search issues and feedback..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                  data-testid="input-search-issues"
+                />
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                  data-testid="select-filter-type"
+                >
+                  <option value="all">All Issues</option>
+                  <option value="bug">Bug Reports</option>
+                  <option value="feature">Feature Requests</option>
+                  <option value="improvement">Improvements</option>
+                  <option value="general">General Feedback</option>
+                </select>
+              </div>
+
+              {/* Issues List */}
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {filteredFeedback.length > 0 ? (
+                  filteredFeedback.map((feedback) => (
+                    <Card key={feedback.id} className="bg-muted/50">
+                      <CardContent className="pt-4">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <h4 className="font-semibold">{feedback.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{feedback.message}</p>
+                            </div>
+                            {feedback.rating > 0 && (
+                              <div className="flex gap-1">
+                                {[...Array(feedback.rating)].map((_, i) => (
+                                  <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs">
+                              {feedback.type}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(feedback.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                    <p className="text-sm text-muted-foreground">No issues found</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
