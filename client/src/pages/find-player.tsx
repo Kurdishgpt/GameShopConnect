@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Users, Search, Send } from "lucide-react";
+import { Users, Search, Send, MessageSquare } from "lucide-react";
 
 export default function FindPlayer() {
   const { toast } = useToast();
@@ -27,6 +27,8 @@ export default function FindPlayer() {
   const [selectedPlayer, setSelectedPlayer] = useState<User | null>(null);
   const [selectedGame, setSelectedGame] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
+  const [messageMode, setMessageMode] = useState<'request' | 'message'>('request');
+  const [messageContent, setMessageContent] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -81,6 +83,40 @@ export default function FindPlayer() {
     },
   });
 
+  const messageMutation = useMutation({
+    mutationFn: async (data: { toUserId: string; content: string }) => {
+      await apiRequest("POST", "/api/messages", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Message sent successfully!",
+      });
+      setSelectedPlayer(null);
+      setMessageContent("");
+      setMessageMode('request');
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredPlayers = players?.filter((player) => {
     if (player.id === currentUser?.id) return false;
     
@@ -99,6 +135,12 @@ export default function FindPlayer() {
 
   const handleSendRequest = (player: User) => {
     setSelectedPlayer(player);
+    setMessageMode('request');
+  };
+
+  const handleSendMessage = (player: User) => {
+    setSelectedPlayer(player);
+    setMessageMode('message');
   };
 
   const handleSubmitRequest = () => {
@@ -107,6 +149,15 @@ export default function FindPlayer() {
         toUserId: selectedPlayer.id,
         game: selectedGame,
         message: requestMessage,
+      });
+    }
+  };
+
+  const handleSubmitMessage = () => {
+    if (selectedPlayer && messageContent.trim()) {
+      messageMutation.mutate({
+        toUserId: selectedPlayer.id,
+        content: messageContent,
       });
     }
   };
@@ -241,14 +292,23 @@ export default function FindPlayer() {
                 )}
               </CardContent>
             )}
-            <CardFooter>
+            <CardFooter className="gap-2">
               <Button
-                className="w-full"
+                className="flex-1"
                 onClick={() => handleSendRequest(player)}
                 data-testid={`button-send-request-${player.id}`}
               >
                 <Send className="h-4 w-4 mr-2" />
-                Send Request
+                Request
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => handleSendMessage(player)}
+                data-testid={`button-send-message-${player.id}`}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Message
               </Button>
             </CardFooter>
           </Card>
@@ -264,7 +324,7 @@ export default function FindPlayer() {
       )}
 
       {/* Play Request Dialog */}
-      <Dialog open={!!selectedPlayer} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
+      <Dialog open={!!selectedPlayer && messageMode === 'request'} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
         <DialogContent data-testid="dialog-play-request">
           <DialogHeader>
             <DialogTitle>Send Play Request to {selectedPlayer?.username || selectedPlayer?.firstName}</DialogTitle>
@@ -314,6 +374,46 @@ export default function FindPlayer() {
               data-testid="button-submit-play-request"
             >
               {playRequestMutation.isPending ? "Sending..." : "Send Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Direct Message Dialog */}
+      <Dialog open={!!selectedPlayer && messageMode === 'message'} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
+        <DialogContent data-testid="dialog-send-message">
+          <DialogHeader>
+            <DialogTitle>Send Message to {selectedPlayer?.username || selectedPlayer?.firstName}</DialogTitle>
+            <DialogDescription>
+              Send a direct message to start a conversation
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Message</label>
+              <Textarea
+                placeholder="Type your message..."
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                data-testid="input-direct-message"
+                className="min-h-24"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedPlayer(null)}
+              data-testid="button-cancel-message"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitMessage}
+              disabled={!messageContent.trim() || messageMutation.isPending}
+              data-testid="button-submit-message"
+            >
+              {messageMutation.isPending ? "Sending..." : "Send Message"}
             </Button>
           </DialogFooter>
         </DialogContent>
