@@ -352,6 +352,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/stories', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      // Check if user has media role
+      if (userRole !== 'media') {
+        return res.status(403).json({ message: "Only users with media role can post stories" });
+      }
+
       const validatedData = insertVideoStorySchema.parse(req.body);
       const story = await storage.createVideoStory({ ...validatedData, userId });
       res.json(story);

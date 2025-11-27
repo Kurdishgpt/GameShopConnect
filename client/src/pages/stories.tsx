@@ -152,13 +152,14 @@ export default function Stories() {
           </p>
         </div>
         
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg" data-testid="button-create-story">
-              <Plus className="h-5 w-5 mr-2" />
-              Post Story
-            </Button>
-          </DialogTrigger>
+        {user?.role === 'media' ? (
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg" data-testid="button-create-story">
+                <Plus className="h-5 w-5 mr-2" />
+                Post Story
+              </Button>
+            </DialogTrigger>
           <DialogContent data-testid="dialog-create-story">
             <DialogHeader>
               <DialogTitle>Post a Video Story</DialogTitle>
@@ -221,7 +222,12 @@ export default function Stories() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        ) : (
+          <div className="text-center text-muted-foreground">
+            <p className="text-sm">Only media creators can post stories</p>
+          </div>
+        )}
       </div>
 
       {/* Stories Grid */}
