@@ -22,8 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { Gamepad2, User, Mail, Lock, Calendar, Heart, ArrowRight, Sparkles } from "lucide-react";
+import { Gamepad2, User, Mail, Lock, Calendar, Heart, ArrowRight, Sparkles, Zap, ChevronRight } from "lucide-react";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20),
@@ -42,7 +41,7 @@ export default function Signup() {
   const { toast } = useToast();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1); // Multi-step form
+  const [step, setStep] = useState(1);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -100,36 +99,51 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Vibrant Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900" />
+      
+      {/* Animated Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-green-400/10 via-transparent to-purple-500/10" />
+
+      {/* Floating Blobs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-lime-400/20 to-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-gradient-to-br from-orange-400/20 to-red-500/20 rounded-full blur-3xl animate-pulse"></div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
+        {/* Header with Gaming Icon */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 mb-4 shadow-lg">
-            <Sparkles className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-lime-400 via-cyan-500 to-blue-600 mb-6 shadow-2xl shadow-cyan-500/50 animate-bounce">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Join the Gaming Hub</h1>
-          <p className="text-purple-200">Create your account and start playing</p>
+          <h1 className="text-5xl font-black text-white mb-2 drop-shadow-lg">Join GameHub!</h1>
+          <p className="text-lg text-lime-200 font-semibold">Start your gaming journey now</p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex justify-center gap-2 mb-6">
+        {/* Progress Steps - Bold and Colorful */}
+        <div className="flex justify-center gap-3 mb-8">
           {[1, 2, 3].map((s) => (
-            <div
-              key={s}
-              className={`h-2 w-8 rounded-full transition-all ${
-                s <= step ? "bg-purple-500" : "bg-white/20"
-              }`}
-            />
+            <div key={s} className="flex items-center gap-3">
+              <div
+                className={`h-3 w-10 rounded-full transition-all font-black text-white text-xs flex items-center justify-center ${
+                  s <= step ? "bg-gradient-to-r from-cyan-400 to-purple-500 shadow-lg shadow-purple-500/50" : "bg-white/20"
+                }`}
+              >
+                {s <= step && s < 3 && <span></span>}
+              </div>
+              {s < 3 && <div className={s <= step ? "text-cyan-400" : "text-white/30"}>/</div>}
+            </div>
           ))}
         </div>
 
-        {/* Signup Card */}
-        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
-          <div className="p-8">
+        {/* Main Card */}
+        <div className="relative">
+          {/* Gradient Border Effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-lime-400 via-cyan-500 to-pink-500 rounded-2xl blur opacity-75 animate-pulse"></div>
+          
+          {/* Card Content */}
+          <div className="relative bg-slate-950/90 backdrop-blur-2xl rounded-2xl p-10 border border-white/10 shadow-2xl">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Step 1: Basic Info */}
@@ -141,15 +155,15 @@ export default function Signup() {
                         name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                              <User className="w-4 h-4 text-blue-400" />
-                              First Name
+                            <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                              <User className="w-4 h-4 text-cyan-400" />
+                              First
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="John"
                                 {...field}
-                                className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                                className="bg-white/5 border-2 border-cyan-500/30 text-white placeholder:text-white/40 focus:border-cyan-400 focus:bg-cyan-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                                 data-testid="input-firstname"
                               />
                             </FormControl>
@@ -163,12 +177,15 @@ export default function Signup() {
                         name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-white text-sm font-semibold">Last Name</FormLabel>
+                            <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                              <User className="w-4 h-4 text-purple-400" />
+                              Last
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Doe"
                                 {...field}
-                                className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                                className="bg-white/5 border-2 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:bg-purple-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                                 data-testid="input-lastname"
                               />
                             </FormControl>
@@ -183,15 +200,15 @@ export default function Signup() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Gamepad2 className="w-4 h-4 text-blue-400" />
-                            Gaming Username
+                          <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                            <Gamepad2 className="w-4 h-4 text-lime-400" />
+                            Gaming Tag
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="gaming_pro_123"
                               {...field}
-                              className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                              className="bg-white/5 border-2 border-lime-500/30 text-white placeholder:text-white/40 focus:border-lime-400 focus:bg-lime-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                               data-testid="input-username"
                             />
                           </FormControl>
@@ -203,10 +220,10 @@ export default function Signup() {
                     <Button
                       type="button"
                       onClick={() => setStep(2)}
-                      className="w-full h-10 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-all"
+                      className="w-full h-12 bg-gradient-to-r from-lime-400 via-cyan-500 to-blue-600 hover:from-lime-300 hover:via-cyan-400 hover:to-blue-500 text-slate-950 font-black text-base rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-cyan-500/50 hover:shadow-cyan-500/75 hover:scale-105 active:scale-95 uppercase tracking-wider mt-6"
                     >
                       Next Step
-                      <ArrowRight className="w-4 h-4" />
+                      <ChevronRight className="w-5 h-5" />
                     </Button>
                   </div>
                 )}
@@ -219,8 +236,8 @@ export default function Signup() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-blue-400" />
+                          <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                            <Lock className="w-4 h-4 text-pink-400" />
                             Password
                           </FormLabel>
                           <FormControl>
@@ -228,7 +245,7 @@ export default function Signup() {
                               type="password"
                               placeholder="••••••••"
                               {...field}
-                              className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                              className="bg-white/5 border-2 border-pink-500/30 text-white placeholder:text-white/40 focus:border-pink-400 focus:bg-pink-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                               data-testid="input-password"
                             />
                           </FormControl>
@@ -242,16 +259,16 @@ export default function Signup() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-blue-400" />
-                            Email (Optional)
+                          <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                            <Mail className="w-4 h-4 text-orange-400" />
+                            Email
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="email"
                               placeholder="john@example.com"
                               {...field}
-                              className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                              className="bg-white/5 border-2 border-orange-500/30 text-white placeholder:text-white/40 focus:border-orange-400 focus:bg-orange-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                               data-testid="input-email"
                             />
                           </FormControl>
@@ -265,17 +282,17 @@ export default function Signup() {
                         type="button"
                         onClick={() => setStep(1)}
                         variant="outline"
-                        className="flex-1 h-10 border-white/20 text-white hover:bg-white/10"
+                        className="flex-1 h-10 border-2 border-white/20 text-white hover:bg-white/10 font-bold rounded-lg"
                       >
                         Back
                       </Button>
                       <Button
                         type="button"
                         onClick={() => setStep(3)}
-                        className="flex-1 h-10 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                        className="flex-1 h-10 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-black rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/50 hover:shadow-purple-500/75 uppercase tracking-wider"
                       >
-                        Next Step
-                        <ArrowRight className="w-4 h-4" />
+                        Next
+                        <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -289,15 +306,15 @@ export default function Signup() {
                       name="birthDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            Birth Date (Optional)
+                          <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                            <Calendar className="w-4 h-4 text-red-400" />
+                            Birth Date
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="date"
                               {...field}
-                              className="bg-white/5 border border-white/10 text-white focus:border-blue-500 focus:bg-white/10 transition-all h-10 rounded-lg"
+                              className="bg-white/5 border-2 border-red-500/30 text-white focus:border-red-400 focus:bg-red-500/5 transition-all h-10 px-3 rounded-lg text-sm"
                               data-testid="input-birthdate"
                             />
                           </FormControl>
@@ -311,13 +328,13 @@ export default function Signup() {
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Heart className="w-4 h-4 text-blue-400" />
-                            Gender (Optional)
+                          <FormLabel className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 mb-2">
+                            <Heart className="w-4 h-4 text-rose-400" />
+                            Gender
                           </FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
-                              <SelectTrigger className="bg-white/5 border border-white/10 text-white focus:border-blue-500 focus:bg-white/10 h-10 rounded-lg" data-testid="select-gender">
+                              <SelectTrigger className="bg-white/5 border-2 border-rose-500/30 text-white focus:border-rose-400 focus:bg-rose-500/5 h-10 rounded-lg text-sm" data-testid="select-gender">
                                 <SelectValue placeholder="Select gender" />
                               </SelectTrigger>
                             </FormControl>
@@ -337,25 +354,25 @@ export default function Signup() {
                         type="button"
                         onClick={() => setStep(2)}
                         variant="outline"
-                        className="flex-1 h-10 border-white/20 text-white hover:bg-white/10"
+                        className="flex-1 h-10 border-2 border-white/20 text-white hover:bg-white/10 font-bold rounded-lg"
                       >
                         Back
                       </Button>
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 h-10 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-all"
+                        className="flex-1 h-10 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 hover:from-cyan-300 hover:via-purple-400 hover:to-pink-400 text-slate-950 font-black rounded-lg flex items-center justify-center gap-2 transition-all shadow-xl shadow-purple-500/50 hover:shadow-purple-500/75 uppercase tracking-wider"
                         data-testid="button-signup"
                       >
                         {isLoading ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
                             Creating...
                           </>
                         ) : (
                           <>
+                            <Zap className="w-4 h-4" />
                             Create Account
-                            <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </Button>
@@ -367,28 +384,30 @@ export default function Signup() {
 
             {/* Divider */}
             <div className="my-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-white/10"></div>
-              <span className="text-white/50 text-sm">or</span>
-              <div className="flex-1 h-px bg-white/10"></div>
+              <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/30 to-transparent"></div>
+              <span className="text-white/50 text-xs font-bold">OR</span>
+              <div className="flex-1 h-px bg-gradient-to-l from-pink-500/30 to-transparent"></div>
             </div>
 
             {/* Login Link */}
             <div className="text-center">
-              <p className="text-white/70 text-sm">
-                Already have an account?{" "}
+              <p className="text-white/80 text-sm font-medium">
+                Already a player?{" "}
                 <Link href="/login">
-                  <a className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-                    Sign in here
+                  <a className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-cyan-400 font-black hover:from-lime-300 hover:to-cyan-300 transition-all">
+                    SIGN IN NOW
                   </a>
                 </Link>
               </p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Footer Info */}
-        <div className="mt-8 text-center text-white/50 text-xs">
-          <p>Secure registration with industry-standard encryption</p>
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-white/50 text-xs font-bold uppercase tracking-widest">
+            🎮 Join Thousands of Gamers 🎮
+          </p>
         </div>
       </div>
     </div>

@@ -15,8 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card } from "@/components/ui/card";
-import { Gamepad2, Mail, Lock, ArrowRight } from "lucide-react";
+import { Gamepad2, Mail, Lock, ArrowRight, Zap } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -77,47 +76,58 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Vibrant Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900" />
+      
+      {/* Animated Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-purple-500/10" />
+
+      {/* Floating Blobs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-gradient-to-br from-green-400/20 to-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 mb-4 shadow-lg">
-            <Gamepad2 className="w-7 h-7 text-white" />
+        {/* Header with Gaming Icon */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 mb-6 shadow-2xl shadow-purple-500/50 animate-bounce">
+            <Gamepad2 className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-purple-200">Sign in to your gaming adventure</p>
+          <h1 className="text-5xl font-black text-white mb-3 drop-shadow-lg">Welcome Back!</h1>
+          <p className="text-lg text-cyan-200 font-semibold">Enter the gaming arena</p>
         </div>
 
-        {/* Login Card */}
-        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
-          <div className="p-8">
+        {/* Main Card */}
+        <div className="relative">
+          {/* Gradient Border Effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-75 animate-pulse"></div>
+          
+          {/* Card Content */}
+          <div className="relative bg-slate-950/90 backdrop-blur-2xl rounded-2xl p-10 border border-white/10 shadow-2xl">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {/* Username Field */}
                 <FormField
                   control={form.control}
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-purple-400" />
+                      <FormLabel className="text-white text-sm font-bold uppercase tracking-wide flex items-center gap-2 mb-3">
+                        <div className="w-5 h-5 rounded bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center">
+                          <Mail className="w-3 h-3 text-white" />
+                        </div>
                         Username
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder="gaming_pro_123"
-                            {...field}
-                            className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-purple-500 focus:bg-white/10 transition-all h-11 pl-4 rounded-lg"
-                            data-testid="input-username"
-                          />
-                        </div>
+                        <Input
+                          placeholder="gaming_pro_123"
+                          {...field}
+                          className="bg-white/5 border-2 border-cyan-500/30 text-white placeholder:text-white/40 focus:border-cyan-400 focus:bg-cyan-500/5 focus:shadow-lg focus:shadow-cyan-500/20 transition-all h-12 px-4 rounded-xl text-base font-medium"
+                          data-testid="input-username"
+                        />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-400 text-xs font-semibold" />
                     </FormItem>
                   )}
                 />
@@ -128,42 +138,43 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white text-sm font-semibold flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-purple-400" />
+                      <FormLabel className="text-white text-sm font-bold uppercase tracking-wide flex items-center gap-2 mb-3">
+                        <div className="w-5 h-5 rounded bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
+                          <Lock className="w-3 h-3 text-white" />
+                        </div>
                         Password
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Input
-                            type="password"
-                            placeholder="••••••••"
-                            {...field}
-                            className="bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:border-purple-500 focus:bg-white/10 transition-all h-11 pl-4 rounded-lg"
-                            data-testid="input-password"
-                          />
-                        </div>
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-white/5 border-2 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:bg-purple-500/5 focus:shadow-lg focus:shadow-purple-500/20 transition-all h-12 px-4 rounded-xl text-base font-medium"
+                          data-testid="input-password"
+                        />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-400 text-xs font-semibold" />
                     </FormItem>
                   )}
                 />
 
-                {/* Sign In Button */}
+                {/* Sign In Button - Big and Bold */}
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 mt-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-purple-500/50"
+                  className="w-full h-14 mt-8 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 hover:from-cyan-300 hover:via-purple-400 hover:to-pink-400 text-white font-black text-lg rounded-xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-purple-500/50 hover:shadow-purple-500/75 hover:scale-105 active:scale-95 uppercase tracking-wider"
                   data-testid="button-login"
                 >
                   {isLoading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
                       Signing in...
                     </>
                   ) : (
                     <>
+                      <Zap className="w-5 h-5" />
                       Sign In
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </Button>
@@ -171,29 +182,31 @@ export default function Login() {
             </Form>
 
             {/* Divider */}
-            <div className="my-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-white/10"></div>
-              <span className="text-white/50 text-sm">or</span>
-              <div className="flex-1 h-px bg-white/10"></div>
+            <div className="my-8 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/30 to-transparent"></div>
+              <span className="text-white/50 text-sm font-semibold">OR</span>
+              <div className="flex-1 h-px bg-gradient-to-l from-pink-500/30 to-transparent"></div>
             </div>
 
             {/* Sign Up Link */}
             <div className="text-center">
-              <p className="text-white/70 text-sm">
+              <p className="text-white/80 text-sm font-medium">
                 Don't have an account?{" "}
                 <Link href="/signup">
-                  <a className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
-                    Create one now
+                  <a className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 font-black hover:from-cyan-300 hover:to-pink-400 transition-all">
+                    CREATE ACCOUNT
                   </a>
                 </Link>
               </p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Footer Info */}
-        <div className="mt-8 text-center text-white/50 text-xs">
-          <p>Secure login with industry-standard encryption</p>
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-white/50 text-xs font-semibold uppercase tracking-widest">
+            ⚡ Secure Gaming Platform ⚡
+          </p>
         </div>
       </div>
     </div>
