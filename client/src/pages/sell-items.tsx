@@ -12,12 +12,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ShoppingBag, Trash2 } from "lucide-react";
 
 const addItemSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   price: z.string().min(1, "Price is required"),
+  currency: z.string().default('USD'),
   category: z.string().optional(),
   imageUrl: z.string().optional(),
 });
@@ -52,6 +60,7 @@ export default function SellItems() {
       title: "",
       description: "",
       price: "",
+      currency: "USD",
       category: "",
       imageUrl: "",
     },
