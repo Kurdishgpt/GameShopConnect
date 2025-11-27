@@ -48,7 +48,7 @@ export default function Landing() {
           </div>
 
           {/* CTA Buttons - Massive */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8">
+          <div className="flex flex-col items-center gap-6 justify-center pt-8">
             <Link href="/login">
               <Button
                 size="lg"
