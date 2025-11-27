@@ -12,7 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Copy, Trash2 } from "lucide-react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 export default function Messages() {
   const { toast } = useToast();
@@ -89,6 +95,38 @@ export default function Messages() {
         content: messageText,
       });
     }
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      await apiRequest("DELETE", `/api/messages/${messageId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Message deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedUserId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete message",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteMessage = (messageId: string) => {
+    deleteMutation.mutate(messageId);
+  };
+
+  const handleCopyMessage = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast({
+      title: "Copied",
+      description: "Message copied to clipboard",
+    });
   };
 
   const getUserInitials = (messageUser: User) => {
@@ -226,26 +264,48 @@ export default function Messages() {
                       {messages.map((message) => {
                         const isFromMe = message.fromUserId === user?.id;
                         return (
-                          <div
-                            key={message.id}
-                            className={`flex ${isFromMe ? "justify-end" : "justify-start"}`}
-                            data-testid={`message-${message.id}`}
-                          >
-                            <div className={`max-w-[70%] ${isFromMe ? "items-end" : "items-start"} flex flex-col gap-1`}>
+                          <ContextMenu key={message.id}>
+                            <ContextMenuTrigger asChild>
                               <div
-                                className={`rounded-lg p-3 ${
-                                  isFromMe
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
+                                className={`flex ${isFromMe ? "justify-end" : "justify-start"} cursor-context-menu`}
+                                data-testid={`message-${message.id}`}
                               >
-                                <p className="text-sm">{message.content}</p>
+                                <div className={`max-w-[70%] ${isFromMe ? "items-end" : "items-start"} flex flex-col gap-1`}>
+                                  <div
+                                    className={`rounded-lg p-3 ${
+                                      isFromMe
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted"
+                                    }`}
+                                  >
+                                    <p className="text-sm">{message.content}</p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground px-2">
+                                    {formatTime(message.createdAt!)}
+                                  </p>
+                                </div>
                               </div>
-                              <p className="text-xs text-muted-foreground px-2">
-                                {formatTime(message.createdAt!)}
-                              </p>
-                            </div>
-                          </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent>
+                              <ContextMenuItem
+                                onClick={() => handleCopyMessage(message.content)}
+                                data-testid={`copy-message-${message.id}`}
+                              >
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy
+                              </ContextMenuItem>
+                              {isFromMe && (
+                                <ContextMenuItem
+                                  onClick={() => handleDeleteMessage(message.id)}
+                                  className="text-destructive"
+                                  data-testid={`delete-message-${message.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </ContextMenuItem>
+                              )}
+                            </ContextMenuContent>
+                          </ContextMenu>
                         );
                       })}
                     </div>

@@ -327,6 +327,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/messages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMessage(id);
+      res.json({ message: "Message deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting message:", error);
+      res.status(400).json({ message: error.message || "Failed to delete message" });
+    }
+  });
+
   // ===== VIDEO STORY ROUTES =====
   app.get('/api/stories', isAuthenticated, async (req, res) => {
     try {

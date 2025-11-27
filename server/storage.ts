@@ -60,6 +60,7 @@ export interface IStorage {
   createMessage(message: InsertMessage & { fromUserId: string }): Promise<Message>;
   getConversations(userId: string): Promise<any[]>;
   getMessages(userId: string, otherUserId: string): Promise<any[]>;
+  deleteMessage(id: string): Promise<void>;
 
   // Video story operations
   createVideoStory(story: InsertVideoStory & { userId: string }): Promise<VideoStory>;
@@ -292,6 +293,10 @@ export class DatabaseStorage implements IStorage {
       ...msg,
       toUser: null, // Not needed for display
     }));
+  }
+
+  async deleteMessage(id: string): Promise<void> {
+    await db.delete(messages).where(eq(messages.id, id));
   }
 
   // Video story operations
