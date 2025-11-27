@@ -123,6 +123,17 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Feedback table
+export const feedback = pgTable("feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(), // 'bug', 'feature', 'improvement', 'general'
+  rating: integer("rating"), // 1-5 star rating
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   shopRequests: many(shopRequests),
@@ -221,6 +232,11 @@ export const updateProfileSchema = createInsertSchema(users).pick({
 });
 
 export const insertShopItemSchema = createInsertSchema(shopItems).omit({ id: true, createdAt: true, ownerId: true });
+
+// Feedback schemas
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({ id: true, createdAt: true, userId: true });
+export type Feedback = typeof feedback.$inferSelect;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
 export const insertShopRequestSchema = createInsertSchema(shopRequests).omit({ id: true, createdAt: true, status: true });
 
