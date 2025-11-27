@@ -131,10 +131,9 @@ export default function Landing() {
             
             <Link href="/signup">
               <Button
-                size="lg"
-                className="h-14 px-10 text-lg font-black bg-gradient-to-r from-lime-400 via-cyan-500 to-blue-600 hover:from-lime-300 hover:via-cyan-400 hover:to-blue-500 text-slate-950 rounded-2xl flex items-center gap-2 transition-all shadow-2xl shadow-cyan-500/50 hover:shadow-cyan-500/75 hover:scale-110 active:scale-95 uppercase tracking-wider cursor-pointer mx-auto"
+                className="h-11 px-6 text-sm font-black bg-gradient-to-r from-lime-400 via-cyan-500 to-blue-600 hover:from-lime-300 hover:via-cyan-400 hover:to-blue-500 text-slate-950 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/50 hover:shadow-cyan-500/75 hover:scale-105 active:scale-95 uppercase tracking-wider cursor-pointer"
               >
-                <Zap className="w-5 h-5" />
+                <Zap className="w-4 h-4" />
                 Start Your Journey
               </Button>
             </Link>
