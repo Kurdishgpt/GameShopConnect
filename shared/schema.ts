@@ -226,7 +226,7 @@ export const insertShopRequestSchema = createInsertSchema(shopRequests).omit({ i
 
 export const insertPlayRequestSchema = createInsertSchema(playRequests).omit({ id: true, createdAt: true, status: true });
 
-export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true, read: true });
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true, read: true, fromUserId: true });
 
 export const insertVideoStorySchema = createInsertSchema(videoStories).omit({ id: true, createdAt: true, likes: true });
 
