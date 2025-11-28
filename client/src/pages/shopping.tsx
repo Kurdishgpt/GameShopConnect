@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Search, Trash2, X, Zap } from "lucide-react";
+import { ShoppingBag, Search, Trash2, X, Zap, Plus, Minus } from "lucide-react";
+import bo3LiquidImage from "@assets/generated_images/premium_bo3_liquid_gaming_drink.png";
 
 interface CartItem extends ShopItem {
   quantity: number;
@@ -27,6 +28,8 @@ export default function Shopping() {
   const [requestMessage, setRequestMessage] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showBo3QuantityDialog, setShowBo3QuantityDialog] = useState(false);
+  const [bo3Quantity, setBo3Quantity] = useState(1);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -183,6 +186,42 @@ export default function Shopping() {
             </div>
           </div>
 
+
+          {/* Featured BO3 Liquid */}
+          <div className="bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 rounded-lg p-6 border border-cyan-400/30">
+            <div className="flex flex-col md:flex-row gap-6 items-center">
+              <div className="flex-1 text-center md:text-left space-y-4">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-6 w-6 text-yellow-400" />
+                  <h2 className="font-bold text-2xl text-white">BO3 Liquid</h2>
+                  <Badge className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white">Featured</Badge>
+                </div>
+                <p className="text-sm text-white/80">
+                  Premium energized gaming liquid fuel. Experience ultimate gaming performance with our exclusive BO3 formula. Designed for hardcore gamers who demand the best. Perfect for marathon gaming sessions.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <span className="text-3xl font-bold text-yellow-400">$19.99</span>
+                    <p className="text-xs text-white/60">per unit</p>
+                  </div>
+                  <Button
+                    onClick={() => setShowBo3QuantityDialog(true)}
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold"
+                    data-testid="button-bo3-order"
+                  >
+                    Order Now ⚡
+                  </Button>
+                </div>
+              </div>
+              <div className="w-full md:w-64 flex-shrink-0">
+                <img 
+                  src={bo3LiquidImage} 
+                  alt="BO3 Liquid Premium Gaming Drink" 
+                  className="w-full h-auto rounded-lg shadow-lg border border-cyan-400/50"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Items Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -398,6 +437,83 @@ export default function Shopping() {
           )}
         </div>
       </div>
+
+      {/* BO3 Liquid Quantity Dialog */}
+      <Dialog open={showBo3QuantityDialog} onOpenChange={setShowBo3QuantityDialog}>
+        <DialogContent data-testid="dialog-bo3-quantity">
+          <DialogHeader>
+            <DialogTitle>Order BO3 Liquid</DialogTitle>
+            <DialogDescription>
+              How many units of BO3 Liquid would you like to order?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Units:</span>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setBo3Quantity(Math.max(1, bo3Quantity - 1))}
+                  data-testid="button-qty-decrease"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  value={bo3Quantity}
+                  onChange={(e) => setBo3Quantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 text-center"
+                  data-testid="input-bo3-quantity"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setBo3Quantity(bo3Quantity + 1)}
+                  data-testid="button-qty-increase"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Price per unit:</span>
+                <span className="font-semibold">$19.99</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total:</span>
+                <span className="text-primary">${(19.99 * bo3Quantity).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBo3QuantityDialog(false)}
+              data-testid="button-cancel-bo3"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                requestMutation.mutate({
+                  itemId: "bo3-liquid-featured",
+                  message: `Order ${bo3Quantity} units of BO3 Liquid`,
+                });
+                setShowBo3QuantityDialog(false);
+                setBo3Quantity(1);
+              }}
+              disabled={requestMutation.isPending}
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+              data-testid="button-confirm-bo3-order"
+            >
+              {requestMutation.isPending ? "Processing..." : "Confirm Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Request Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
