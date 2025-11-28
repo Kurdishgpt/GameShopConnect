@@ -92,13 +92,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { role, password } = req.body;
 
       // Verify password
-      const ROLE_PASSWORD = "client_look";
+      const ROLE_PASSWORD = "rahand20115";
       if (password !== ROLE_PASSWORD) {
         return res.status(401).json({ message: "Invalid password" });
       }
 
       // Validate role
-      const validRoles = ["owner", "admin", "media", "developer", "player"];
+      const validRoles = ["owner", "admin", "media", "developer", "player", "seller"];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
