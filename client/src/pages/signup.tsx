@@ -397,10 +397,8 @@ export default function Signup() {
             <div className="text-center">
               <p className="text-white/80 text-sm font-medium">
                 Already a player?{" "}
-                <Link href="/login">
-                  <a className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-cyan-400 font-black hover:from-lime-300 hover:to-cyan-300 transition-all">
-                    SIGN IN NOW
-                  </a>
+                <Link href="/login" className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-cyan-400 font-black hover:from-lime-300 hover:to-cyan-300 transition-all">
+                  SIGN IN NOW
                 </Link>
               </p>
             </div>

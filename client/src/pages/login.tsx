@@ -196,10 +196,8 @@ export default function Login() {
             <div className="text-center">
               <p className="text-white/80 text-sm font-medium">
                 Don't have an account?{" "}
-                <Link href="/signup">
-                  <a className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 font-black hover:from-cyan-300 hover:to-pink-400 transition-all">
-                    CREATE ACCOUNT
-                  </a>
+                <Link href="/signup" className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 font-black hover:from-cyan-300 hover:to-pink-400 transition-all">
+                  CREATE ACCOUNT
                 </Link>
               </p>
             </div>
