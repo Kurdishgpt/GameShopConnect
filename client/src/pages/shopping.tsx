@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, Search, Trash2, X, Zap, Plus, Minus } from "lucide-react";
-import bo3LiquidImage from "@assets/generated_images/premium_bo3_liquid_gaming_drink.png";
+import bo3LiquidImage from "@assets/generated_images/ultra_premium_bo3_gaming_liquid_bottle.png";
 
 interface CartItem extends ShopItem {
   quantity: number;
@@ -199,19 +199,13 @@ export default function Shopping() {
                 <p className="text-sm text-white/80">
                   Premium energized gaming liquid fuel. Experience ultimate gaming performance with our exclusive BO3 formula. Designed for hardcore gamers who demand the best. Perfect for marathon gaming sessions.
                 </p>
-                <div className="flex items-center gap-4">
-                  <div>
-                    <span className="text-3xl font-bold text-yellow-400">$19.99</span>
-                    <p className="text-xs text-white/60">per unit</p>
-                  </div>
-                  <Button
-                    onClick={() => setShowBo3QuantityDialog(true)}
-                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold"
-                    data-testid="button-bo3-order"
-                  >
-                    Order Now ⚡
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setShowBo3QuantityDialog(true)}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold"
+                  data-testid="button-bo3-order"
+                >
+                  Order Now ⚡
+                </Button>
               </div>
               <div className="w-full md:w-64 flex-shrink-0">
                 <img 
