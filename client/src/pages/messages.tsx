@@ -10,71 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Phone, Video, Send, Camera, Smile, Gift, Plus, ArrowLeft, Zap, Heart, Image as ImageIcon, Check } from "lucide-react";
-
-// Mock conversations with different message types
-const MOCK_CONVERSATIONS = [
-  {
-    id: "user1",
-    name: "Pro Gamer Jake",
-    avatar: "JG",
-    color: "bg-gradient-to-br from-cyan-400 to-blue-500",
-    status: "online",
-    lastMessage: "GG! 🎮",
-    unread: 2,
-    messages: [
-      { type: "text", content: "Hey! You free to play?", sent: false, time: "10:30" },
-      { type: "emoji", content: "🎮", sent: false, time: "10:31" },
-      { type: "text", content: "Let's go! I'm in", sent: true, time: "10:32" },
-      { type: "image", content: "Screenshot of victory", sent: true, time: "10:35" },
-      { type: "text", content: "GG! Great match", sent: false, time: "10:36" },
-    ]
-  },
-  {
-    id: "user2",
-    name: "Luna Gaming",
-    avatar: "LG",
-    color: "bg-gradient-to-br from-pink-400 to-purple-500",
-    status: "online",
-    lastMessage: "See you in squad soon!",
-    unread: 0,
-    messages: [
-      { type: "text", content: "Squad up tonight?", sent: false, time: "09:15" },
-      { type: "emoji", content: "✨💜", sent: false, time: "09:16" },
-    ]
-  },
-  {
-    id: "user3",
-    name: "Shadow King",
-    avatar: "SK",
-    color: "bg-gradient-to-br from-lime-400 to-green-500",
-    status: "offline",
-    lastMessage: "Let's play ranked!",
-    unread: 0,
-    messages: [
-      { type: "text", content: "Ranked match in 5?", sent: false, time: "08:45" },
-    ]
-  },
-  {
-    id: "user4",
-    name: "Pixel Master",
-    avatar: "PM",
-    color: "bg-gradient-to-br from-orange-400 to-red-500",
-    status: "online",
-    lastMessage: "Call me when ready",
-    unread: 1,
-    messages: [
-      { type: "text", content: "Video call?", sent: false, time: "11:00" },
-    ]
-  },
-];
+import { Phone, Video, Send, Camera, Smile, Gift, Plus, ArrowLeft, Zap } from "lucide-react";
 
 export default function Messages() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
-  const [localMessages, setLocalMessages] = useState<any[]>([]);
+
+  // Get userId from query params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    if (userId) {
+      setSelectedUserId(userId);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -90,33 +42,91 @@ export default function Messages() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  // Load mock messages when user is selected
-  useEffect(() => {
-    if (selectedUserId) {
-      const conversation = MOCK_CONVERSATIONS.find(c => c.id === selectedUserId);
-      if (conversation) {
-        setLocalMessages(conversation.messages);
-      }
-    }
-  }, [selectedUserId]);
+  // Fetch conversations
+  const { data: conversations, isLoading: conversationsLoading } = useQuery<Array<{
+    user: User;
+    lastMessage: Message;
+    unreadCount: number;
+  }>>({
+    queryKey: ["/api/conversations"],
+    enabled: isAuthenticated,
+  });
 
-  const handleSendMessage = () => {
-    if (messageText.trim()) {
-      const newMessage = {
-        type: "text",
-        content: messageText,
-        sent: true,
-        time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-      };
-      setLocalMessages([...localMessages, newMessage]);
+  // Fetch messages for selected user
+  const { data: messages, isLoading: messagesLoading } = useQuery<(Message & {
+    fromUser: User;
+    toUser: User;
+  })[]>({
+    queryKey: ["/api/messages", selectedUserId],
+    enabled: isAuthenticated && !!selectedUserId,
+  });
+
+  // Send message mutation
+  const sendMutation = useMutation({
+    mutationFn: async (data: { toUserId: string; content: string }) => {
+      await apiRequest("POST", "/api/messages", data);
+    },
+    onSuccess: () => {
       setMessageText("");
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedUserId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       toast({
         description: "Message sent!",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (selectedUserId && messageText.trim()) {
+      sendMutation.mutate({
+        toUserId: selectedUserId,
+        content: messageText,
       });
     }
   };
 
-  const selectedConversation = MOCK_CONVERSATIONS.find(c => c.id === selectedUserId);
+  const selectedConversation = conversations?.find(c => c.user.id === selectedUserId);
+
+  const getInitials = (u: User) => {
+    if (u.username) return u.username.substring(0, 2).toUpperCase();
+    if (u.firstName && u.lastName) return `${u.firstName[0]}${u.lastName[0]}`.toUpperCase();
+    return "U";
+  };
+
+  const getGradientColor = (userId: string, index: number) => {
+    const colors = [
+      "bg-gradient-to-br from-cyan-400 to-blue-500",
+      "bg-gradient-to-br from-pink-400 to-purple-500",
+      "bg-gradient-to-br from-lime-400 to-green-500",
+      "bg-gradient-to-br from-orange-400 to-red-500",
+    ];
+    return colors[Math.abs(userId.charCodeAt(0) + index) % colors.length];
+  };
+
+  const formatTime = (date: Date | string) => {
+    return new Date(date).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
 
   if (authLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -143,38 +153,47 @@ export default function Messages() {
         {/* Conversations */}
         <ScrollArea className="flex-1">
           <div className="space-y-2 p-3">
-            {MOCK_CONVERSATIONS.map((conversation) => (
-              <button
-                key={conversation.id}
-                onClick={() => setSelectedUserId(conversation.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover-elevate ${
-                  selectedUserId === conversation.id
-                    ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30"
-                    : "hover:bg-white/5"
-                }`}
-              >
-                {/* Avatar */}
-                <div className={`relative w-12 h-12 rounded-full ${conversation.color} flex items-center justify-center font-black text-white shadow-lg`}>
-                  {conversation.avatar}
-                  {conversation.status === "online" && (
+            {conversations && conversations.length > 0 ? (
+              conversations.map((conversation, idx) => (
+                <button
+                  key={conversation.user.id}
+                  onClick={() => setSelectedUserId(conversation.user.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover-elevate ${
+                    selectedUserId === conversation.user.id
+                      ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30"
+                      : "hover:bg-white/5"
+                  }`}
+                  data-testid={`conversation-${conversation.user.id}`}
+                >
+                  {/* Avatar */}
+                  <div className={`relative w-12 h-12 rounded-full ${getGradientColor(conversation.user.id, idx)} flex items-center justify-center font-black text-white shadow-lg`}>
+                    {getInitials(conversation.user)}
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950"></div>
+                  </div>
+
+                  {/* Message Info */}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="font-bold text-white truncate">
+                      {conversation.user.username || `${conversation.user.firstName} ${conversation.user.lastName}`}
+                    </p>
+                    <p className="text-xs text-white/60 truncate">{conversation.lastMessage.content}</p>
+                  </div>
+
+                  {/* Unread Badge */}
+                  {conversation.unreadCount > 0 && (
+                    <Badge className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-black ml-auto">
+                      {conversation.unreadCount}
+                    </Badge>
                   )}
-                </div>
-
-                {/* Message Info */}
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="font-bold text-white truncate">{conversation.name}</p>
-                  <p className="text-xs text-white/60 truncate">{conversation.lastMessage}</p>
-                </div>
-
-                {/* Unread Badge */}
-                {conversation.unread > 0 && (
-                  <Badge className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-black ml-auto">
-                    {conversation.unread}
-                  </Badge>
-                )}
-              </button>
-            ))}
+                </button>
+              ))
+            ) : (
+              <div className="p-8 text-center text-white/50">
+                <Zap className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-bold">No conversations yet</p>
+                <p className="text-sm mt-1">Start chatting!</p>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </div>
@@ -191,14 +210,17 @@ export default function Messages() {
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
-              <div className={`w-12 h-12 rounded-full ${selectedConversation.color} flex items-center justify-center font-black text-white shadow-lg`}>
-                {selectedConversation.avatar}
-              </div>
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={selectedConversation.user.profileImageUrl || undefined} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-black">
+                  {getInitials(selectedConversation.user)}
+                </AvatarFallback>
+              </Avatar>
               <div>
-                <p className="font-black text-white">{selectedConversation.name}</p>
-                <p className={`text-xs font-semibold ${selectedConversation.status === "online" ? "text-green-400" : "text-white/50"}`}>
-                  {selectedConversation.status === "online" ? "🟢 Active now" : "⚪ Offline"}
+                <p className="font-black text-white">
+                  {selectedConversation.user.username || `${selectedConversation.user.firstName} ${selectedConversation.user.lastName}`}
                 </p>
+                <p className="text-xs font-semibold text-green-400">🟢 Active now</p>
               </div>
             </div>
 
@@ -216,39 +238,32 @@ export default function Messages() {
           {/* Messages */}
           <ScrollArea className="flex-1 p-6">
             <div className="space-y-4 max-w-2xl">
-              {localMessages.length > 0 ? (
-                localMessages.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${msg.sent ? "justify-end" : "justify-start"}`}
-                  >
-                    <div className={`flex flex-col gap-2 max-w-xs ${msg.sent ? "items-end" : "items-start"}`}>
-                      {msg.type === "text" && (
+              {messagesLoading ? (
+                <div className="text-center text-white/50">
+                  <p>Loading messages...</p>
+                </div>
+              ) : messages && messages.length > 0 ? (
+                messages.map((msg) => {
+                  const isFromMe = msg.fromUserId === user?.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex ${isFromMe ? "justify-end" : "justify-start"}`}
+                      data-testid={`message-${msg.id}`}
+                    >
+                      <div className={`flex flex-col gap-2 max-w-xs ${isFromMe ? "items-end" : "items-start"}`}>
                         <div className={`px-4 py-3 rounded-3xl ${
-                          msg.sent
+                          isFromMe
                             ? "bg-gradient-to-r from-cyan-400 to-purple-500 text-white shadow-lg shadow-purple-500/30 font-bold"
                             : "bg-white/10 text-white border border-white/20"
                         }`}>
                           <p className="text-sm">{msg.content}</p>
                         </div>
-                      )}
-                      {msg.type === "emoji" && (
-                        <div className="text-4xl">{msg.content}</div>
-                      )}
-                      {msg.type === "image" && (
-                        <div className={`px-4 py-3 rounded-2xl border-2 ${
-                          msg.sent
-                            ? "bg-gradient-to-br from-cyan-400 to-purple-500 border-cyan-400 text-white"
-                            : "bg-white/10 border-white/20 text-white"
-                        } flex items-center gap-2 font-bold`}>
-                          <ImageIcon className="w-5 h-5" />
-                          {msg.content}
-                        </div>
-                      )}
-                      <span className="text-xs text-white/50 px-2">{msg.time}</span>
+                        <span className="text-xs text-white/50 px-2">{formatTime(msg.createdAt!)}</span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="flex items-center justify-center h-full text-white/50 text-center">
                   <div>
@@ -294,11 +309,13 @@ export default function Messages() {
                   }
                 }}
                 className="flex-1 bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:border-cyan-400 focus:bg-cyan-500/5 rounded-full px-5"
+                data-testid="input-message"
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!messageText.trim()}
+                disabled={!messageText.trim() || sendMutation.isPending}
                 className="p-3 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 text-white rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed hover-elevate"
+                data-testid="button-send-message"
               >
                 <Send className="w-5 h-5" />
               </button>

@@ -107,8 +107,8 @@ export default function FindPlayer() {
   };
 
   const handleSendMessage = (player: User) => {
-    // Navigate to messages page with the player ID
-    navigate("/messages");
+    // Navigate to messages page with the player ID as a query parameter
+    navigate(`/messages?userId=${player.id}`);
   };
 
   const handleSubmitRequest = () => {
