@@ -28,6 +28,7 @@ export default function Shopping() {
   const [requestMessage, setRequestMessage] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [bo3SelectedQty, setBo3SelectedQty] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
