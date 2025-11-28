@@ -544,6 +544,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== DEVELOPER ROUTES =====
+  // Get all users (developers only)
+  app.get('/api/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user?.role;
+
+      // Check if user has developer role
+      if (userRole !== 'developer') {
+        return res.status(403).json({ message: "Only developers can view users" });
+      }
+
+      const allUsers = await storage.getAllPlayers();
+      res.json(allUsers);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      res.status(400).json({ message: error.message || "Failed to fetch users" });
+    }
+  });
+
+  // Delete a specific user (developers only)
+  app.delete('/api/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const userRole = req.user?.role;
+
+      // Check if user has developer role
+      if (userRole !== 'developer') {
+        return res.status(403).json({ message: "Only developers can delete users" });
+      }
+
+      await storage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      res.status(400).json({ message: error.message || "Failed to delete user" });
+    }
+  });
+
+  // Delete own account (developers only)
   app.delete('/api/account', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
