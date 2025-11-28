@@ -21,6 +21,42 @@ export default function Messages() {
   const [activeCall, setActiveCall] = useState<{ userId: string; type: "phone" | "video"; status: "ringing" | "connected" } | null>(null);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Send heartbeat to mark user as online
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await apiRequest("POST", "/api/heartbeat", {});
+        queryClient.invalidateQueries({ queryKey: ["/api/players"] });
+      } catch (error) {
+        console.error("Heartbeat error:", error);
+      }
+    };
+
+    // Send initial heartbeat
+    sendHeartbeat();
+
+    // Send every 30 seconds
+    const interval = setInterval(sendHeartbeat, 30000);
+
+    // Mark offline when leaving
+    const handleBeforeUnload = async () => {
+      try {
+        await apiRequest("POST", "/api/offline", {});
+      } catch (error) {
+        console.error("Offline error:", error);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      handleBeforeUnload();
+    };
+  }, [isAuthenticated, queryClient]);
+
   // Get userId from query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -274,7 +310,9 @@ export default function Messages() {
                 <p className="font-black text-white">
                   {(selectedConversation?.user || selectedUser)?.username || `${(selectedConversation?.user || selectedUser)?.firstName} ${(selectedConversation?.user || selectedUser)?.lastName}`}
                 </p>
-                <p className="text-xs font-semibold text-green-400">🟢 Active now</p>
+                <p className={`text-xs font-semibold ${(selectedConversation?.user || selectedUser)?.isOnline ? "text-green-400" : "text-white/50"}`}>
+                  {(selectedConversation?.user || selectedUser)?.isOnline ? "🟢 Online" : "⚪ Offline"}
+                </p>
               </div>
             </div>
 
@@ -282,44 +320,46 @@ export default function Messages() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  if (selectedUserId) {
-                    setActiveCall({ userId: selectedUserId, type: "phone", status: "ringing" });
+                  if (!selectedUserId) return;
+                  const selectedUserData = selectedConversation?.user || selectedUser;
+                  if (!selectedUserData?.isOnline) {
                     toast({
-                      title: "Calling...",
-                      description: `Calling ${(selectedConversation?.user || selectedUser)?.username || 'user'}`,
+                      title: "User Offline",
+                      description: "This user is not currently online",
+                      variant: "destructive",
                     });
-                    setTimeout(() => {
-                      setActiveCall({ userId: selectedUserId, type: "phone", status: "connected" });
-                      toast({
-                        title: "Call Connected",
-                        description: "You are now in a call",
-                      });
-                    }, 2000);
+                    return;
                   }
+                  setActiveCall({ userId: selectedUserId, type: "phone", status: "ringing" });
+                  toast({
+                    title: "Calling...",
+                    description: `Calling ${selectedUserData?.username || 'user'}`,
+                  });
                 }}
-                disabled={activeCall !== null}
+                disabled={activeCall !== null || !(selectedConversation?.user || selectedUser)?.isOnline}
                 className="p-2 hover:bg-white/10 rounded-lg transition text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
               >
                 <Phone className="w-5 h-5" />
               </button>
               <button
                 onClick={() => {
-                  if (selectedUserId) {
-                    setActiveCall({ userId: selectedUserId, type: "video", status: "ringing" });
+                  if (!selectedUserId) return;
+                  const selectedUserData = selectedConversation?.user || selectedUser;
+                  if (!selectedUserData?.isOnline) {
                     toast({
-                      title: "Calling...",
-                      description: `Video calling ${(selectedConversation?.user || selectedUser)?.username || 'user'}`,
+                      title: "User Offline",
+                      description: "This user is not currently online",
+                      variant: "destructive",
                     });
-                    setTimeout(() => {
-                      setActiveCall({ userId: selectedUserId, type: "video", status: "connected" });
-                      toast({
-                        title: "Call Connected",
-                        description: "You are now in a video call",
-                      });
-                    }, 2000);
+                    return;
                   }
+                  setActiveCall({ userId: selectedUserId, type: "video", status: "ringing" });
+                  toast({
+                    title: "Calling...",
+                    description: `Video calling ${selectedUserData?.username || 'user'}`,
+                  });
                 }}
-                disabled={activeCall !== null}
+                disabled={activeCall !== null || !(selectedConversation?.user || selectedUser)?.isOnline}
                 className="p-2 hover:bg-white/10 rounded-lg transition text-purple-400 hover:text-purple-300 disabled:opacity-50"
               >
                 <Video className="w-5 h-5" />

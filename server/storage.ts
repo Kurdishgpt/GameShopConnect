@@ -42,6 +42,7 @@ export interface IStorage {
   updateUserProfile(id: string, profile: UpdateProfile): Promise<User>;
   updateUserRole(id: string, role: string): Promise<User>;
   getAllPlayers(): Promise<User[]>;
+  updateUserOnlineStatus(id: string, isOnline: boolean): Promise<User>;
 
   // Shop operations
   getAllShopItems(): Promise<ShopItem[]>;
@@ -160,6 +161,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPlayers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserOnlineStatus(id: string, isOnline: boolean): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ isOnline, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
   }
 
   // Shop operations

@@ -149,6 +149,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Heartbeat to mark user as online
+  app.post('/api/heartbeat', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      await storage.updateUserOnlineStatus(userId, true);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating heartbeat:", error);
+      res.status(500).json({ message: "Failed to update heartbeat" });
+    }
+  });
+
+  // Mark user as offline
+  app.post('/api/offline', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      await storage.updateUserOnlineStatus(userId, false);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking user offline:", error);
+      res.status(500).json({ message: "Failed to mark offline" });
+    }
+  });
+
   // ===== SHOP ROUTES =====
   app.get('/api/shop/items', isAuthenticated, async (req, res) => {
     try {
