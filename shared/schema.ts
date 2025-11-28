@@ -239,7 +239,7 @@ export const insertFeedbackSchema = createInsertSchema(feedback).omit({ id: true
 export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
-export const insertShopRequestSchema = createInsertSchema(shopRequests).omit({ id: true, createdAt: true, status: true });
+export const insertShopRequestSchema = createInsertSchema(shopRequests).omit({ id: true, createdAt: true, status: true, userId: true });
 
 export const insertPlayRequestSchema = createInsertSchema(playRequests).omit({ id: true, createdAt: true, status: true });
 
