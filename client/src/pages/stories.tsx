@@ -22,8 +22,9 @@ export default function Stories() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -45,8 +46,20 @@ export default function Stories() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; videoUrl: string; thumbnailUrl: string }) => {
-      await apiRequest("POST", "/api/stories", data);
+    mutationFn: async (data: { title: string; description: string; videoFile: File; thumbnailUrl: string }) => {
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("description", data.description);
+      formData.append("video", data.videoFile);
+      formData.append("thumbnailUrl", data.thumbnailUrl);
+      
+      await fetch("/api/stories", {
+        method: "POST",
+        body: formData,
+      }).then(res => {
+        if (!res.ok) throw new Error("Failed to post story");
+        return res.json();
+      });
     },
     onSuccess: () => {
       toast({
@@ -56,8 +69,9 @@ export default function Stories() {
       setIsCreateOpen(false);
       setTitle("");
       setDescription("");
-      setVideoUrl("");
+      setVideoFile(null);
       setThumbnailUrl("");
+      setUploadProgress(0);
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
     },
     onError: (error: Error) => {
@@ -103,8 +117,25 @@ export default function Stories() {
   });
 
   const handleCreateStory = () => {
-    if (title && videoUrl) {
-      createMutation.mutate({ title, description, videoUrl, thumbnailUrl });
+    if (title && videoFile) {
+      createMutation.mutate({ title, description, videoFile, thumbnailUrl });
+    }
+  };
+
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const maxSize = 5 * 1024 * 1024 * 1024; // 5GB
+      if (file.size > maxSize) {
+        toast({
+          title: "File Too Large",
+          description: "Video must be less than 5GB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setVideoFile(file);
+      setUploadProgress(0);
     }
   };
 
@@ -145,7 +176,7 @@ export default function Stories() {
         <div className="space-y-2">
           <h1 className="font-heading font-bold text-4xl md:text-5xl flex items-center gap-3" data-testid="heading-stories">
             <Video className="h-10 w-10 text-primary" />
-            Video Stories
+            Story Games
           </h1>
           <p className="text-muted-foreground text-lg">
             Share and discover epic gaming moments
@@ -187,13 +218,21 @@ export default function Stories() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Video URL</label>
-                <Input
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  data-testid="input-story-video-url"
-                />
+                <label className="text-sm font-medium mb-2 block">Upload Video (Max 5GB)</label>
+                <div className="border-2 border-dashed rounded-lg p-4">
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoFileChange}
+                    data-testid="input-story-video-file"
+                    className="cursor-pointer"
+                  />
+                  {videoFile && (
+                    <div className="mt-3 text-sm text-green-600">
+                      Selected: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)}MB)
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Thumbnail URL (Optional)</label>
@@ -215,10 +254,10 @@ export default function Stories() {
               </Button>
               <Button
                 onClick={handleCreateStory}
-                disabled={!title || !videoUrl || createMutation.isPending}
+                disabled={!title || !videoFile || createMutation.isPending}
                 data-testid="button-submit-story"
               >
-                {createMutation.isPending ? "Posting..." : "Post Story"}
+                {createMutation.isPending ? "Uploading..." : "Post Story"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -281,7 +320,7 @@ export default function Stories() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex items-center justify-between">
+            <CardFooter className="flex items-center justify-start">
               <Button
                 variant="ghost"
                 size="sm"
@@ -291,14 +330,6 @@ export default function Stories() {
               >
                 <Heart className="h-4 w-4" />
                 {story.likes || 0}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(story.videoUrl, '_blank')}
-                data-testid={`button-watch-${story.id}`}
-              >
-                Watch
               </Button>
             </CardFooter>
           </Card>

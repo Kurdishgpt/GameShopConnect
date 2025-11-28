@@ -32,7 +32,7 @@ const menuItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Shopping", url: "/shopping", icon: ShoppingBag },
   { title: "Find Player", url: "/find-player", icon: Users },
-  { title: "Stories", url: "/stories", icon: Video },
+  { title: "Story Games", url: "/stories", icon: Video },
   { title: "Feedback", url: "/feedback", icon: MessageSquare },
 ];
 
