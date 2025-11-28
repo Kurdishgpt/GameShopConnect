@@ -228,9 +228,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = req.user;
 
-      // Check if current user is owner
-      if (currentUser?.role !== 'owner') {
-        return res.status(403).json({ message: "Only owners can add items to the shop" });
+      // Check if current user is owner or seller
+      if (currentUser?.role !== 'owner' && currentUser?.role !== 'seller') {
+        return res.status(403).json({ message: "Only owners and sellers can add items to the shop" });
       }
 
       const validatedData = insertShopItemSchema.parse(req.body);
@@ -246,9 +246,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const currentUser = req.user;
 
-      // Check if current user is owner
-      if (currentUser?.role !== 'owner') {
-        return res.status(403).json({ message: "Only owners can delete items" });
+      // Check if current user is owner or seller
+      if (currentUser?.role !== 'owner' && currentUser?.role !== 'seller') {
+        return res.status(403).json({ message: "Only owners and sellers can delete items" });
       }
 
       const { id } = req.params;
