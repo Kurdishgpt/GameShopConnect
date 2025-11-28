@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare, Store } from "lucide-react";
+import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare, Store, Database } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +47,10 @@ const sellerMenuItems = [
 
 const mediaMenuItems = [
   { title: "Manage Story Games", url: "/manage-stories", icon: Video },
+];
+
+const developerMenuItems = [
+  { title: "Data Centre", url: "/data-centre", icon: Database },
 ];
 
 const roleConfig = {
@@ -204,6 +208,25 @@ export function AppSidebar() {
               {user?.role === "media" && (
                 <>
                   {mediaMenuItems.map((item) => {
+                    const isActive = location === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive} data-testid={`link-${item.title.toLowerCase().replace(" ", "-")}`}>
+                          <Link href={item.url}>
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Developer-only menu */}
+              {user?.role === "developer" && (
+                <>
+                  {developerMenuItems.map((item) => {
                     const isActive = location === item.url;
                     return (
                       <SidebarMenuItem key={item.title}>

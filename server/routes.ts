@@ -543,6 +543,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== DEVELOPER ROUTES =====
+  app.delete('/api/account', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+
+      // Check if user has developer role
+      if (userRole !== 'developer') {
+        return res.status(403).json({ message: "Only developers can delete their account" });
+      }
+
+      await storage.deleteUser(userId);
+      res.json({ message: "Account deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      res.status(400).json({ message: error.message || "Failed to delete account" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

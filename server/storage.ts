@@ -43,6 +43,7 @@ export interface IStorage {
   updateUserRole(id: string, role: string): Promise<User>;
   getAllPlayers(): Promise<User[]>;
   updateUserOnlineStatus(id: string, isOnline: boolean): Promise<User>;
+  deleteUser(id: string): Promise<void>;
 
   // Shop operations
   getAllShopItems(): Promise<ShopItem[]>;
@@ -174,6 +175,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    // Delete all user data (cascade delete)
+    await db.delete(shopRequests).where(eq(shopRequests.userId, id));
+    await db.delete(shopItems).where(eq(shopItems.ownerId, id));
+    await db.delete(playRequests).where(or(eq(playRequests.fromUserId, id), eq(playRequests.toUserId, id)));
+    await db.delete(messages).where(or(eq(messages.fromUserId, id), eq(messages.toUserId, id)));
+    await db.delete(videoStories).where(eq(videoStories.userId, id));
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Shop operations
