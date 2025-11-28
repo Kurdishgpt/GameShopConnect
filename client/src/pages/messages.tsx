@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Phone, Video, Send, Camera, Smile, Gift, Plus, ArrowLeft, Zap } from "lucide-react";
+import { Phone, Video, Send, Camera, Smile, Gift, Plus, ArrowLeft, Zap, PhoneOff, Mic, MicOff } from "lucide-react";
 
 export default function Messages() {
   const { toast } = useToast();
@@ -18,6 +18,8 @@ export default function Messages() {
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [activeCall, setActiveCall] = useState<{ userId: string; type: "phone" | "video"; status: "ringing" | "connected" } | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Get userId from query params
   useEffect(() => {
@@ -278,14 +280,117 @@ export default function Messages() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <button className="p-2 hover:bg-white/10 rounded-lg transition text-cyan-400 hover:text-cyan-300">
+              <button
+                onClick={() => {
+                  if (selectedUserId) {
+                    setActiveCall({ userId: selectedUserId, type: "phone", status: "ringing" });
+                    toast({
+                      title: "Calling...",
+                      description: `Calling ${(selectedConversation?.user || selectedUser)?.username || 'user'}`,
+                    });
+                    setTimeout(() => {
+                      setActiveCall({ userId: selectedUserId, type: "phone", status: "connected" });
+                      toast({
+                        title: "Call Connected",
+                        description: "You are now in a call",
+                      });
+                    }, 2000);
+                  }
+                }}
+                disabled={activeCall !== null}
+                className="p-2 hover:bg-white/10 rounded-lg transition text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+              >
                 <Phone className="w-5 h-5" />
               </button>
-              <button className="p-2 hover:bg-white/10 rounded-lg transition text-purple-400 hover:text-purple-300">
+              <button
+                onClick={() => {
+                  if (selectedUserId) {
+                    setActiveCall({ userId: selectedUserId, type: "video", status: "ringing" });
+                    toast({
+                      title: "Calling...",
+                      description: `Video calling ${(selectedConversation?.user || selectedUser)?.username || 'user'}`,
+                    });
+                    setTimeout(() => {
+                      setActiveCall({ userId: selectedUserId, type: "video", status: "connected" });
+                      toast({
+                        title: "Call Connected",
+                        description: "You are now in a video call",
+                      });
+                    }, 2000);
+                  }
+                }}
+                disabled={activeCall !== null}
+                className="p-2 hover:bg-white/10 rounded-lg transition text-purple-400 hover:text-purple-300 disabled:opacity-50"
+              >
                 <Video className="w-5 h-5" />
               </button>
             </div>
           </div>
+
+          {/* Active Call Overlay */}
+          {activeCall && (
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-lg flex flex-col items-center justify-center rounded-lg z-50">
+              <div className="text-center space-y-6">
+                <div>
+                  <Avatar className="h-24 w-24 mx-auto mb-4">
+                    <AvatarImage src={(selectedConversation?.user || selectedUser)?.profileImageUrl || undefined} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-purple-500 text-white font-black text-3xl">
+                      {getInitials(selectedConversation?.user || selectedUser!)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-2xl font-black text-white">
+                    {(selectedConversation?.user || selectedUser)?.username || `${(selectedConversation?.user || selectedUser)?.firstName}`}
+                  </p>
+                  <p className={`text-sm font-bold mt-2 ${activeCall.status === "ringing" ? "text-yellow-400 animate-pulse" : "text-green-400"}`}>
+                    {activeCall.status === "ringing" ? "Ringing..." : `${activeCall.type === "video" ? "Video Call" : "Call"} Connected`}
+                  </p>
+                </div>
+
+                {activeCall.status === "connected" && (
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      onClick={() => setIsMuted(!isMuted)}
+                      className={`p-4 rounded-full transition-all ${
+                        isMuted ? "bg-red-500 hover:bg-red-600" : "bg-cyan-500 hover:bg-cyan-600"
+                      } text-white`}
+                    >
+                      {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveCall(null);
+                        setIsMuted(false);
+                        toast({
+                          title: "Call Ended",
+                          description: "The call has been disconnected",
+                        });
+                      }}
+                      className="p-4 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all"
+                    >
+                      <PhoneOff className="w-6 h-6" />
+                    </button>
+                  </div>
+                )}
+
+                {activeCall.status === "ringing" && (
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      onClick={() => {
+                        setActiveCall(null);
+                        toast({
+                          title: "Call Declined",
+                          description: "You declined the call",
+                        });
+                      }}
+                      className="px-6 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all font-bold"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-6">
