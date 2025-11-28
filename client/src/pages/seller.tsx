@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Store, Plus, Package, Trash2, Zap, Check, X } from "lucide-react";
+import { Store, Plus, Package, Trash2, Zap, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import bo3LiquidImage from "@assets/generated_images/bo3_liquid_gaming_drink.png";
 
@@ -124,6 +124,19 @@ export default function Seller() {
       toast({
         title: "Order Rejected",
         description: "Order has been rejected",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/requests"] });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      await apiRequest("DELETE", `/api/shop/requests/${requestId}`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Removed",
+        description: "Order has been removed",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/shop/requests"] });
     },
@@ -315,12 +328,12 @@ export default function Seller() {
                         size="sm"
                         variant="destructive"
                         className="flex-1"
-                        onClick={() => rejectOrderMutation.mutate(request.id)}
-                        disabled={rejectOrderMutation.isPending}
-                        data-testid={`button-reject-order-${request.id}`}
+                        onClick={() => deleteOrderMutation.mutate(request.id)}
+                        disabled={deleteOrderMutation.isPending}
+                        data-testid={`button-remove-order-${request.id}`}
                       >
-                        <X className="h-3 w-3 mr-1" />
-                        Reject
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
                       </Button>
                     </div>
                   </div>

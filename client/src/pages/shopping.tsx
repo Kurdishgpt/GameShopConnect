@@ -300,7 +300,7 @@ export default function Shopping() {
                 disabled={requestMutation.isPending}
                 data-testid={`button-order-now-${item.id}`}
               >
-                {requestMutation.isPending ? "Processing..." : "Order Now"}
+                {requestMutation.isPending ? "Processing..." : "Add Order"}
               </Button>
               <Button
                 className="w-full"

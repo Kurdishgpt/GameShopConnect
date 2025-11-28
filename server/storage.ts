@@ -51,6 +51,7 @@ export interface IStorage {
   deleteShopItem(id: string): Promise<void>;
   createShopRequest(request: InsertShopRequest & { userId: string }): Promise<ShopRequest>;
   getUserShopRequests(userId: string): Promise<ShopRequest[]>;
+  deleteShopRequest(id: string): Promise<void>;
 
   // Play request operations
   createPlayRequest(request: InsertPlayRequest & { fromUserId: string }): Promise<PlayRequest>;
@@ -202,6 +203,10 @@ export class DatabaseStorage implements IStorage {
       .from(shopRequests)
       .where(eq(shopRequests.userId, userId))
       .orderBy(desc(shopRequests.createdAt));
+  }
+
+  async deleteShopRequest(id: string): Promise<void> {
+    await db.delete(shopRequests).where(eq(shopRequests.id, id));
   }
 
   // Play request operations

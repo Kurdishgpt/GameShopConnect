@@ -213,6 +213,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/shop/requests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteShopRequest(id);
+      res.json({ message: "Order removed successfully" });
+    } catch (error: any) {
+      console.error("Error deleting shop request:", error);
+      res.status(400).json({ message: error.message || "Failed to delete request" });
+    }
+  });
+
   app.post('/api/shop/items', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;
