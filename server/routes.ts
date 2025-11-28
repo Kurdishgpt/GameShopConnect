@@ -462,6 +462,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/stories/my-stories', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const stories = await storage.getUserVideoStories(userId);
+      res.json(stories);
+    } catch (error) {
+      console.error("Error fetching user stories:", error);
+      res.status(500).json({ message: "Failed to fetch your stories" });
+    }
+  });
+
+  app.delete('/api/stories/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      
+      // Get the story to check if the user is the owner
+      const story = await storage.getVideoStory(id);
+      
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      // Check if the current user is the owner
+      if (story.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own stories" });
+      }
+      
+      await storage.deleteVideoStory(id);
+      res.json({ message: "Story deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting story:", error);
+      res.status(400).json({ message: error.message || "Failed to delete story" });
+    }
+  });
+
   app.post('/api/stories/:id/like', isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;

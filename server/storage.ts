@@ -67,7 +67,10 @@ export interface IStorage {
   // Video story operations
   createVideoStory(story: InsertVideoStory & { userId: string }): Promise<VideoStory>;
   getAllVideoStories(): Promise<any[]>;
+  getUserVideoStories(userId: string): Promise<any[]>;
+  getVideoStory(id: string): Promise<any | undefined>;
   likeVideoStory(id: string): Promise<VideoStory>;
+  deleteVideoStory(id: string): Promise<void>;
 
   // Notification operations
   createNotification(notification: InsertNotification & { userId: string }): Promise<Notification>;
@@ -343,6 +346,47 @@ export class DatabaseStorage implements IStorage {
     return stories;
   }
 
+  async getUserVideoStories(userId: string): Promise<any[]> {
+    const stories = await db
+      .select({
+        id: videoStories.id,
+        title: videoStories.title,
+        description: videoStories.description,
+        videoUrl: videoStories.videoUrl,
+        thumbnailUrl: videoStories.thumbnailUrl,
+        likes: videoStories.likes,
+        createdAt: videoStories.createdAt,
+        userId: videoStories.userId,
+        user: users,
+      })
+      .from(videoStories)
+      .leftJoin(users, eq(videoStories.userId, users.id))
+      .where(eq(videoStories.userId, userId))
+      .orderBy(desc(videoStories.createdAt));
+
+    return stories;
+  }
+
+  async getVideoStory(id: string): Promise<any | undefined> {
+    const [story] = await db
+      .select({
+        id: videoStories.id,
+        title: videoStories.title,
+        description: videoStories.description,
+        videoUrl: videoStories.videoUrl,
+        thumbnailUrl: videoStories.thumbnailUrl,
+        likes: videoStories.likes,
+        createdAt: videoStories.createdAt,
+        userId: videoStories.userId,
+        user: users,
+      })
+      .from(videoStories)
+      .leftJoin(users, eq(videoStories.userId, users.id))
+      .where(eq(videoStories.id, id));
+
+    return story;
+  }
+
   async likeVideoStory(id: string): Promise<VideoStory> {
     const [story] = await db
       .update(videoStories)
@@ -350,6 +394,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(videoStories.id, id))
       .returning();
     return story;
+  }
+
+  async deleteVideoStory(id: string): Promise<void> {
+    await db.delete(videoStories).where(eq(videoStories.id, id));
   }
 
   // Notification operations
