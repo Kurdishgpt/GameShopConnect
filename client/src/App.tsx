@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -27,6 +28,14 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -81,6 +90,7 @@ function Router() {
 
 function HeaderWithNotifications() {
   const [, navigate] = useLocation();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { data: notificationsData } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
   });
@@ -88,38 +98,67 @@ function HeaderWithNotifications() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-background">
-      <SidebarTrigger data-testid="button-sidebar-toggle" />
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate("/notifications")}
-          className="relative"
-          data-testid="button-notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              data-testid="badge-unread-count"
+    <>
+      <header className="flex items-center justify-between p-4 border-b bg-background">
+        <SidebarTrigger data-testid="button-sidebar-toggle" />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/notifications")}
+            className="relative"
+            data-testid="button-notifications"
+          >
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                data-testid="badge-unread-count"
+              >
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLogoutDialog(true)}
+            data-testid="button-logout"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </header>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent data-testid="dialog-logout-confirm">
+          <DialogHeader>
+            <DialogTitle>Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout? You will need to login again to access your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+              data-testid="button-logout-cancel"
             >
-              {unreadCount}
-            </Badge>
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.location.href = '/api/logout'}
-          data-testid="button-logout"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
-      </div>
-    </header>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => window.location.href = '/api/logout'}
+              data-testid="button-logout-confirm"
+            >
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
