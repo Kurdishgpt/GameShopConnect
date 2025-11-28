@@ -189,6 +189,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteShopItem(id: string): Promise<void> {
+    // Delete all shop requests for this item first (cascade delete)
+    await db.delete(shopRequests).where(eq(shopRequests.itemId, id));
+    // Then delete the item
     await db.delete(shopItems).where(eq(shopItems.id, id));
   }
 
