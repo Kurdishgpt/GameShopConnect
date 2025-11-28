@@ -471,16 +471,6 @@ export default function Shopping() {
                 </Button>
               </div>
             </div>
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Price per unit:</span>
-                <span className="font-semibold">$19.99</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-primary">${(19.99 * bo3Quantity).toFixed(2)}</span>
-              </div>
-            </div>
           </div>
           <DialogFooter>
             <Button
