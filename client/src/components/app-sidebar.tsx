@@ -45,6 +45,10 @@ const sellerMenuItems = [
   { title: "Seller", url: "/seller", icon: Store },
 ];
 
+const mediaMenuItems = [
+  { title: "Manage Story Games", url: "/manage-stories", icon: Video },
+];
+
 const roleConfig = {
   owner: { label: "Owner", color: "bg-chart-5 text-white", icon: Crown },
   admin: { label: "Admin", color: "bg-chart-1 text-white", icon: Shield },
@@ -181,6 +185,25 @@ export function AppSidebar() {
               {user?.role === "seller" && (
                 <>
                   {sellerMenuItems.map((item) => {
+                    const isActive = location === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive} data-testid={`link-${item.title.toLowerCase().replace(" ", "-")}`}>
+                          <Link href={item.url}>
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Media-only menu */}
+              {user?.role === "media" && (
+                <>
+                  {mediaMenuItems.map((item) => {
                     const isActive = location === item.url;
                     return (
                       <SidebarMenuItem key={item.title}>

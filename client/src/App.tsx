@@ -16,6 +16,7 @@ import FindPlayer from "@/pages/find-player";
 import Stories from "@/pages/stories";
 import Messages from "@/pages/messages";
 import ManagePlayers from "@/pages/manage-players";
+import ManageStories from "@/pages/manage-stories";
 import SellItems from "@/pages/sell-items";
 import Seller from "@/pages/seller";
 import Notifications from "@/pages/notifications";
@@ -73,6 +74,7 @@ function Router() {
               <Route path="/shopping" component={Shopping} />
               <Route path="/find-player" component={FindPlayer} />
               <Route path="/stories" component={Stories} />
+              <Route path="/manage-stories" component={ManageStories} />
               <Route path="/messages" component={Messages} />
               <Route path="/manage-players" component={ManagePlayers} />
               <Route path="/sell-items" component={SellItems} />
