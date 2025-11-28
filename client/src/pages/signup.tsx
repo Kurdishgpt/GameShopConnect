@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Gamepad2, User, Mail, Lock, Calendar, Heart, ArrowRight, Sparkles, Zap, ChevronRight } from "lucide-react";
+import gambleBallBg from "@assets/generated_images/futuristic_gaming_gamble_ball.png";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20),
@@ -100,8 +101,11 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Vibrant Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900" />
+      {/* Gamble Ball Background */}
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${gambleBallBg})` }} />
+
+      {/* Vibrant Gradient Background Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/70 via-purple-900/70 to-pink-900/70" />
       
       {/* Animated Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-green-400/10 via-transparent to-purple-500/10" />

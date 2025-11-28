@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Gamepad2, Mail, Lock, ArrowRight, Zap } from "lucide-react";
+import gambleBallBg from "@assets/generated_images/futuristic_gaming_gamble_ball.png";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -77,8 +78,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Vibrant Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900" />
+      {/* Gamble Ball Background */}
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${gambleBallBg})` }} />
+
+      {/* Vibrant Gradient Background Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/70 via-purple-900/70 to-pink-900/70" />
       
       {/* Animated Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-purple-500/10" />
