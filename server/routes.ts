@@ -19,6 +19,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication middleware
   await setupAuth(app);
 
+  // Initialize BO3 Liquid featured item if it doesn't exist
+  try {
+    const bo3Item = await storage.getShopItem("bo3-liquid-featured");
+    if (!bo3Item) {
+      // Create a system owner for featured items
+      let systemOwner = await storage.getUserByUsername("system-featured");
+      if (!systemOwner) {
+        systemOwner = await storage.createUser({
+          username: "system-featured",
+          passwordHash: "system",
+          firstName: "System",
+          lastName: "Featured",
+        });
+      }
+      
+      // Create the BO3 Liquid item
+      await storage.createShopItem({
+        id: "bo3-liquid-featured",
+        title: "BO3 Liquid",
+        description: "Premium energized gaming liquid fuel. Experience ultimate gaming performance with our exclusive BO3 formula. Designed for hardcore gamers who demand the best. Perfect for marathon gaming sessions.",
+        price: "Contact for pricing",
+        currency: "USD",
+        category: "Gaming Beverages",
+        ownerId: systemOwner.id,
+      });
+    }
+  } catch (error) {
+    console.log("BO3 Liquid item already exists or error initializing:", error);
+  }
+
   // ===== AUTH ROUTES =====
   app.post('/api/auth/signup', async (req: any, res) => {
     try {

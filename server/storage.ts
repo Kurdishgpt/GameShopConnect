@@ -183,7 +183,7 @@ export class DatabaseStorage implements IStorage {
     return item;
   }
 
-  async createShopItem(item: InsertShopItem & { ownerId: string }): Promise<ShopItem> {
+  async createShopItem(item: InsertShopItem & { ownerId: string; id?: string }): Promise<ShopItem> {
     const [shopItem] = await db.insert(shopItems).values(item).returning();
     return shopItem;
   }
