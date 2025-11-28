@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Store, Plus, Package, Trash2, Zap } from "lucide-react";
+import { Store, Plus, Package, Trash2, Zap, Check, X } from "lucide-react";
+import { useLocation } from "wouter";
 import bo3LiquidImage from "@assets/generated_images/bo3_liquid_gaming_drink.png";
 
 interface SellerOrder {
@@ -24,10 +25,20 @@ interface SellerOrder {
   createdAt: string;
 }
 
+interface ShopRequest {
+  id: string;
+  userId: string;
+  itemId: string;
+  status: "pending" | "accepted" | "rejected";
+  message: string;
+  createdAt: string;
+}
+
 export default function Seller() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [formData, setFormData] = useState({ title: "", description: "", price: "", currency: "USD" });
@@ -81,6 +92,41 @@ export default function Seller() {
   const { data: sellerItems, isLoading } = useQuery<ShopItem[]>({
     queryKey: ["/api/shop/items"],
     enabled: isAuthenticated && user?.role === "seller",
+  });
+
+  const { data: shopRequests } = useQuery<ShopRequest[]>({
+    queryKey: ["/api/shop/requests"],
+    enabled: isAuthenticated && user?.role === "seller",
+  });
+
+  const acceptOrderMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      await apiRequest("PATCH", `/api/shop/requests/${requestId}`, { status: "accepted" });
+    },
+    onSuccess: (_, requestId) => {
+      const request = shopRequests?.find(r => r.id === requestId);
+      if (request) {
+        navigate(`/messages?userId=${request.userId}`);
+        toast({
+          title: "Order Accepted",
+          description: "Starting chat with buyer...",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/requests"] });
+    },
+  });
+
+  const rejectOrderMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      await apiRequest("PATCH", `/api/shop/requests/${requestId}`, { status: "rejected" });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Rejected",
+        description: "Order has been rejected",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/requests"] });
+    },
   });
 
   const createItemMutation = useMutation({
@@ -234,12 +280,61 @@ export default function Seller() {
             </CardContent>
           </Card>
 
+          {/* Pending Orders */}
+          <Card data-testid="panel-pending-orders">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Pending Orders ({shopRequests?.filter(r => r.status === "pending").length || 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+              {!shopRequests || shopRequests.filter(r => r.status === "pending").length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No pending orders</p>
+              ) : (
+                shopRequests.filter(r => r.status === "pending").map((request) => (
+                  <div key={request.id} className="border rounded-lg p-3" data-testid={`pending-order-${request.id}`}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{request.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Requested at: {new Date(request.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-green-500 hover:bg-green-600"
+                        onClick={() => acceptOrderMutation.mutate(request.id)}
+                        disabled={acceptOrderMutation.isPending}
+                        data-testid={`button-accept-order-${request.id}`}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => rejectOrderMutation.mutate(request.id)}
+                        disabled={rejectOrderMutation.isPending}
+                        data-testid={`button-reject-order-${request.id}`}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
           {/* Orders Summary */}
           <Card data-testid="panel-orders-summary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Orders ({orders.length})
+                My Orders ({orders.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 max-h-96 overflow-y-auto">

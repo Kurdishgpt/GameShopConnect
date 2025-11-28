@@ -184,6 +184,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/shop/requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const requests = await storage.getUserShopRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching shop requests:", error);
+      res.status(500).json({ message: "Failed to fetch shop requests" });
+    }
+  });
+
+  app.patch('/api/shop/requests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user?.id;
+
+      if (!['accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updated = await storage.updatePlayRequestStatus(id, status);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating shop request:", error);
+      res.status(400).json({ message: error.message || "Failed to update request" });
+    }
+  });
+
   app.post('/api/shop/items', isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = req.user;

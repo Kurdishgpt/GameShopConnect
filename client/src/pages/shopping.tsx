@@ -288,21 +288,27 @@ export default function Shopping() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="gap-2">
+            <CardFooter className="gap-2 flex-col">
               <Button
-                className="flex-1"
+                className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 text-white font-bold"
+                onClick={() => {
+                  requestMutation.mutate({
+                    itemId: item.id,
+                    message: `Buy order for ${item.title}`,
+                  });
+                }}
+                disabled={requestMutation.isPending}
+                data-testid={`button-order-now-${item.id}`}
+              >
+                {requestMutation.isPending ? "Processing..." : "Order Now"}
+              </Button>
+              <Button
+                className="w-full"
                 variant="outline"
                 onClick={() => handleAddToCart(item)}
                 data-testid={`button-add-cart-${item.id}`}
               >
                 Add to Cart
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => handleRequestClick(item)}
-                data-testid={`button-request-${item.id}`}
-              >
-                Request
               </Button>
             </CardFooter>
           </Card>
