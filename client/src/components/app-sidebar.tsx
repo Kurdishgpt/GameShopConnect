@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare } from "lucide-react";
+import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -41,15 +41,20 @@ const ownerMenuItems = [
   { title: "Sell Items", url: "/sell-items", icon: ShoppingBag },
 ];
 
+const sellerMenuItems = [
+  { title: "Seller", url: "/seller", icon: Store },
+];
+
 const roleConfig = {
   owner: { label: "Owner", color: "bg-chart-5 text-white", icon: Crown },
   admin: { label: "Admin", color: "bg-chart-1 text-white", icon: Shield },
   media: { label: "Media", color: "bg-chart-2 text-white", icon: Camera },
   developer: { label: "Developer", color: "bg-chart-3 text-white", icon: Code },
   player: { label: "Player", color: "bg-chart-4 text-white", icon: Gamepad2 },
+  seller: { label: "Seller", color: "bg-chart-5 text-white", icon: Store },
 };
 
-const roles = ["owner", "admin", "media", "developer", "player"] as const;
+const roles = ["owner", "admin", "media", "developer", "player", "seller"] as const;
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -157,6 +162,25 @@ export function AppSidebar() {
               {user?.role === "owner" && (
                 <>
                   {ownerMenuItems.map((item) => {
+                    const isActive = location === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive} data-testid={`link-${item.title.toLowerCase().replace(" ", "-")}`}>
+                          <Link href={item.url}>
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Seller-only menu */}
+              {user?.role === "seller" && (
+                <>
+                  {sellerMenuItems.map((item) => {
                     const isActive = location === item.url;
                     return (
                       <SidebarMenuItem key={item.title}>

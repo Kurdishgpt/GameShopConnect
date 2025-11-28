@@ -16,6 +16,7 @@ import Stories from "@/pages/stories";
 import Messages from "@/pages/messages";
 import ManagePlayers from "@/pages/manage-players";
 import SellItems from "@/pages/sell-items";
+import Seller from "@/pages/seller";
 import Notifications from "@/pages/notifications";
 import Feedback from "@/pages/feedback";
 import NotFound from "@/pages/not-found";
@@ -66,6 +67,7 @@ function Router() {
               <Route path="/messages" component={Messages} />
               <Route path="/manage-players" component={ManagePlayers} />
               <Route path="/sell-items" component={SellItems} />
+              <Route path="/seller" component={Seller} />
               <Route path="/notifications" component={Notifications} />
               <Route path="/feedback" component={Feedback} />
               <Route component={NotFound} />

@@ -197,34 +197,43 @@ export default function Shopping() {
                   Premium Call of Duty Black Ops 3 gaming liquid. 50,000 units - $399.99
                 </p>
                 <Button
-                  onClick={() => setBo3SelectedQty(50000)}
+                  onClick={() => {
+                    if (user?.role === "seller") {
+                      // Redirect sellers to their seller page with auto-order
+                      window.location.href = "/seller?orderBo3=true";
+                    } else {
+                      setBo3SelectedQty(50000);
+                    }
+                  }}
                   className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold"
                   data-testid="button-bo3-qty-50k"
                 >
                   50K x - $399.99 ⚡
                 </Button>
-                <Button
-                  className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 text-white font-bold"
-                  onClick={() => {
-                    setCart(prev => [...prev, { 
-                      id: "bo3-liquid", 
-                      title: `BO3 Liquid (50000x)`,
-                      price: "$399.99",
-                      description: "Premium BO3 Gaming Liquid",
-                      ownerId: "system",
-                      quantity: 1,
-                      category: "Gaming",
-                    } as CartItem]);
-                    toast({
-                      title: "Added to Cart",
-                      description: `BO3 Liquid (50000x) added successfully!`,
-                    });
-                    setBo3SelectedQty(null);
-                  }}
-                  data-testid="button-add-bo3-to-cart"
-                >
-                  Add to Cart
-                </Button>
+                {bo3SelectedQty && (
+                  <Button
+                    className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 text-white font-bold"
+                    onClick={() => {
+                      setCart(prev => [...prev, { 
+                        id: "bo3-liquid", 
+                        title: `BO3 Liquid (50000x)`,
+                        price: "$399.99",
+                        description: "Premium BO3 Gaming Liquid",
+                        ownerId: "system",
+                        quantity: 1,
+                        category: "Gaming",
+                      } as CartItem]);
+                      toast({
+                        title: "Added to Cart",
+                        description: `BO3 Liquid (50000x) added successfully!`,
+                      });
+                      setBo3SelectedQty(null);
+                    }}
+                    data-testid="button-add-bo3-to-cart"
+                  >
+                    Add to Cart
+                  </Button>
+                )}
               </div>
               <div className="w-full md:w-64 flex-shrink-0">
                 <img 
