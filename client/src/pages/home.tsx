@@ -59,7 +59,7 @@ export default function Home() {
 
           <div className="space-y-6">
             <h1 
-              className="font-heading font-bold text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse leading-tight" 
+              className="font-heading font-bold text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent animate-pulse leading-tight" 
               data-testid="heading-home"
             >
               Level Up Your Gaming
