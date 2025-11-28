@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import type { User } from "@shared/schema";
@@ -19,6 +20,7 @@ import { Users, Search, Send, MessageSquare } from "lucide-react";
 export default function FindPlayer() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user: currentUser } = useAuth();
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
   const [searchName, setSearchName] = useState("");
@@ -28,7 +30,6 @@ export default function FindPlayer() {
   const [selectedGame, setSelectedGame] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
   const [messageMode, setMessageMode] = useState<'request' | 'message'>('request');
-  const [messageContent, setMessageContent] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -83,39 +84,6 @@ export default function FindPlayer() {
     },
   });
 
-  const messageMutation = useMutation({
-    mutationFn: async (data: { toUserId: string; content: string }) => {
-      await apiRequest("POST", "/api/messages", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Message sent successfully!",
-      });
-      setSelectedPlayer(null);
-      setMessageContent("");
-      setMessageMode('request');
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-    },
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      });
-    },
-  });
 
   const filteredPlayers = players?.filter((player) => {
     if (player.id === currentUser?.id) return false;
@@ -139,8 +107,8 @@ export default function FindPlayer() {
   };
 
   const handleSendMessage = (player: User) => {
-    setSelectedPlayer(player);
-    setMessageMode('message');
+    // Navigate to messages page with the player ID
+    navigate("/messages");
   };
 
   const handleSubmitRequest = () => {
@@ -153,14 +121,6 @@ export default function FindPlayer() {
     }
   };
 
-  const handleSubmitMessage = () => {
-    if (selectedPlayer && messageContent.trim()) {
-      messageMutation.mutate({
-        toUserId: selectedPlayer.id,
-        content: messageContent,
-      });
-    }
-  };
 
   const getPlayerInitials = (player: User) => {
     if (player.username) {
@@ -379,45 +339,6 @@ export default function FindPlayer() {
         </DialogContent>
       </Dialog>
 
-      {/* Direct Message Dialog */}
-      <Dialog open={!!selectedPlayer && messageMode === 'message'} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
-        <DialogContent data-testid="dialog-send-message">
-          <DialogHeader>
-            <DialogTitle>Send Message to {selectedPlayer?.username || selectedPlayer?.firstName}</DialogTitle>
-            <DialogDescription>
-              Send a direct message to start a conversation
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Message</label>
-              <Textarea
-                placeholder="Type your message..."
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                data-testid="input-direct-message"
-                className="min-h-24"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSelectedPlayer(null)}
-              data-testid="button-cancel-message"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitMessage}
-              disabled={!messageContent.trim() || messageMutation.isPending}
-              data-testid="button-submit-message"
-            >
-              {messageMutation.isPending ? "Sending..." : "Send Message"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
