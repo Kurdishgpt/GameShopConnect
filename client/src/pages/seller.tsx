@@ -142,6 +142,26 @@ export default function Seller() {
     },
   });
 
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      await apiRequest("DELETE", `/api/shop/items/${itemId}`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Item Deleted",
+        description: "Your item has been deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/items"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete item",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createItemMutation = useMutation({
     mutationFn: async (data: any) => {
       await apiRequest("POST", "/api/shop/items", data);
@@ -426,10 +446,13 @@ export default function Seller() {
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => handleAddOrder(item, 1)}
-                        data-testid={`button-order-item-${item.id}`}
+                        variant="destructive"
+                        onClick={() => deleteItemMutation.mutate(item.id)}
+                        disabled={deleteItemMutation.isPending}
+                        data-testid={`button-delete-item-${item.id}`}
                       >
-                        Add Order
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
                       </Button>
                     </div>
                   ))
