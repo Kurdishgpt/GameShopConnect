@@ -21,6 +21,38 @@ export default function Messages() {
   const [activeCall, setActiveCall] = useState<{ userId: string; type: "phone" | "video"; status: "ringing" | "connected" } | null>(null);
   const [isMuted, setIsMuted] = useState(false);
 
+  // Play sound effect
+  const playSound = (type: "ring" | "connect" | "disconnect") => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    if (type === "ring") {
+      oscillator.frequency.value = 440;
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(480, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } else if (type === "connect") {
+      oscillator.frequency.value = 600;
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.15);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.15);
+    } else if (type === "disconnect") {
+      oscillator.frequency.value = 300;
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.2);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    }
+  };
+
   // Send heartbeat to mark user as online
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -230,7 +262,7 @@ export default function Messages() {
                       <p className="font-bold text-white truncate">
                         {conversation.user.username || `${conversation.user.firstName} ${conversation.user.lastName}`}
                       </p>
-                      <p className="text-xs text-white/60 truncate">{conversation.lastMessage.content}</p>
+                      <p className="text-xs text-white/60 line-clamp-2">{conversation.lastMessage.content}</p>
                     </div>
 
                     {/* Unread Badge */}
@@ -331,6 +363,7 @@ export default function Messages() {
                     return;
                   }
                   setActiveCall({ userId: selectedUserId, type: "phone", status: "ringing" });
+                  playSound("ring");
                   toast({
                     title: "Calling...",
                     description: `Calling ${selectedUserData?.username || 'user'}`,
@@ -354,6 +387,7 @@ export default function Messages() {
                     return;
                   }
                   setActiveCall({ userId: selectedUserId, type: "video", status: "ringing" });
+                  playSound("ring");
                   toast({
                     title: "Calling...",
                     description: `Video calling ${selectedUserData?.username || 'user'}`,
@@ -398,6 +432,7 @@ export default function Messages() {
                     </button>
                     <button
                       onClick={() => {
+                        playSound("disconnect");
                         setActiveCall(null);
                         setIsMuted(false);
                         toast({
@@ -416,6 +451,7 @@ export default function Messages() {
                   <div className="flex gap-4 justify-center">
                     <button
                       onClick={() => {
+                        playSound("disconnect");
                         setActiveCall(null);
                         toast({
                           title: "Call Declined",
