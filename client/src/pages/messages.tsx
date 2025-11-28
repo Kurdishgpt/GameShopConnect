@@ -52,6 +52,12 @@ export default function Messages() {
     enabled: isAuthenticated,
   });
 
+  // Fetch all available users
+  const { data: allUsers, isLoading: allUsersLoading } = useQuery<User[]>({
+    queryKey: ["/api/players"],
+    enabled: isAuthenticated,
+  });
+
   // Fetch messages for selected user
   const { data: messages, isLoading: messagesLoading } = useQuery<(Message & {
     fromUser: User;
@@ -104,6 +110,13 @@ export default function Messages() {
   };
 
   const selectedConversation = conversations?.find(c => c.user.id === selectedUserId);
+  const selectedUser = allUsers?.find(u => u.id === selectedUserId);
+
+  // Get conversation user IDs
+  const conversationUserIds = new Set(conversations?.map(c => c.user.id) || []);
+
+  // Get users not in conversations
+  const availableUsers = allUsers?.filter(u => u.id !== user?.id && !conversationUserIds.has(u.id)) || [];
 
   const getInitials = (u: User) => {
     if (u.username) return u.username.substring(0, 2).toUpperCase();
@@ -150,48 +163,87 @@ export default function Messages() {
           />
         </div>
 
-        {/* Conversations */}
+        {/* Conversations & Users */}
         <ScrollArea className="flex-1">
           <div className="space-y-2 p-3">
-            {conversations && conversations.length > 0 ? (
-              conversations.map((conversation, idx) => (
-                <button
-                  key={conversation.user.id}
-                  onClick={() => setSelectedUserId(conversation.user.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover-elevate ${
-                    selectedUserId === conversation.user.id
-                      ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30"
-                      : "hover:bg-white/5"
-                  }`}
-                  data-testid={`conversation-${conversation.user.id}`}
-                >
-                  {/* Avatar */}
-                  <div className={`relative w-12 h-12 rounded-full ${getGradientColor(conversation.user.id, idx)} flex items-center justify-center font-black text-white shadow-lg`}>
-                    {getInitials(conversation.user)}
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950"></div>
-                  </div>
+            {/* Existing Conversations */}
+            {conversations && conversations.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-black text-cyan-300 uppercase">Conversations</div>
+                {conversations.map((conversation, idx) => (
+                  <button
+                    key={conversation.user.id}
+                    onClick={() => setSelectedUserId(conversation.user.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover-elevate ${
+                      selectedUserId === conversation.user.id
+                        ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30"
+                        : "hover:bg-white/5"
+                    }`}
+                    data-testid={`conversation-${conversation.user.id}`}
+                  >
+                    {/* Avatar */}
+                    <div className={`relative w-12 h-12 rounded-full ${getGradientColor(conversation.user.id, idx)} flex items-center justify-center font-black text-white shadow-lg`}>
+                      {getInitials(conversation.user)}
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950"></div>
+                    </div>
 
-                  {/* Message Info */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="font-bold text-white truncate">
-                      {conversation.user.username || `${conversation.user.firstName} ${conversation.user.lastName}`}
-                    </p>
-                    <p className="text-xs text-white/60 truncate">{conversation.lastMessage.content}</p>
-                  </div>
+                    {/* Message Info */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="font-bold text-white truncate">
+                        {conversation.user.username || `${conversation.user.firstName} ${conversation.user.lastName}`}
+                      </p>
+                      <p className="text-xs text-white/60 truncate">{conversation.lastMessage.content}</p>
+                    </div>
 
-                  {/* Unread Badge */}
-                  {conversation.unreadCount > 0 && (
-                    <Badge className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-black ml-auto">
-                      {conversation.unreadCount}
-                    </Badge>
-                  )}
-                </button>
-              ))
-            ) : (
+                    {/* Unread Badge */}
+                    {conversation.unreadCount > 0 && (
+                      <Badge className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-black ml-auto">
+                        {conversation.unreadCount}
+                      </Badge>
+                    )}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Available Users */}
+            {availableUsers && availableUsers.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-black text-purple-300 uppercase mt-4">Available Players</div>
+                {availableUsers.map((u, idx) => (
+                  <button
+                    key={u.id}
+                    onClick={() => setSelectedUserId(u.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover-elevate ${
+                      selectedUserId === u.id
+                        ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/30"
+                        : "hover:bg-white/5"
+                    }`}
+                    data-testid={`user-${u.id}`}
+                  >
+                    {/* Avatar */}
+                    <div className={`relative w-12 h-12 rounded-full ${getGradientColor(u.id, idx + (conversations?.length || 0))} flex items-center justify-center font-black text-white shadow-lg`}>
+                      {getInitials(u)}
+                    </div>
+
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="font-bold text-white truncate">
+                        {u.username || `${u.firstName} ${u.lastName}`}
+                      </p>
+                      <p className="text-xs text-white/60 truncate">{u.selectedPlatform || "No messages yet"}</p>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Empty State */}
+            {(!conversations || conversations.length === 0) && (!availableUsers || availableUsers.length === 0) && (
               <div className="p-8 text-center text-white/50">
                 <Zap className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-bold">No conversations yet</p>
-                <p className="text-sm mt-1">Start chatting!</p>
+                <p className="font-bold">No users available</p>
+                <p className="text-sm mt-1">Check back soon!</p>
               </div>
             )}
           </div>
@@ -199,7 +251,7 @@ export default function Messages() {
       </div>
 
       {/* Chat Area */}
-      {selectedConversation ? (
+      {(selectedConversation || selectedUser) ? (
         <div className="flex-1 flex flex-col bg-slate-950/50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
@@ -211,14 +263,14 @@ export default function Messages() {
                 <ArrowLeft className="w-6 h-6" />
               </button>
               <Avatar className="h-12 w-12">
-                <AvatarImage src={selectedConversation.user.profileImageUrl || undefined} className="object-cover" />
+                <AvatarImage src={(selectedConversation?.user || selectedUser)?.profileImageUrl || undefined} className="object-cover" />
                 <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-black">
-                  {getInitials(selectedConversation.user)}
+                  {getInitials(selectedConversation?.user || selectedUser!)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-black text-white">
-                  {selectedConversation.user.username || `${selectedConversation.user.firstName} ${selectedConversation.user.lastName}`}
+                  {(selectedConversation?.user || selectedUser)?.username || `${(selectedConversation?.user || selectedUser)?.firstName} ${(selectedConversation?.user || selectedUser)?.lastName}`}
                 </p>
                 <p className="text-xs font-semibold text-green-400">🟢 Active now</p>
               </div>
