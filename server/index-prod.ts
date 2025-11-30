@@ -14,7 +14,7 @@ export async function serveStatic(app: Express, _server: Server) {
   // Public directory is alongside index.js in dist/
   const distPath = path.resolve(__dirname, "public");
 
-  console.log("[prod] Attempting to serve static files from:", distPath);
+  console.log("[prod] Setting up static file serving from:", distPath);
   console.log("[prod] Directory exists:", fs.existsSync(distPath));
 
   if (!fs.existsSync(distPath)) {
@@ -23,16 +23,23 @@ export async function serveStatic(app: Express, _server: Server) {
     );
   }
 
-  // Serve static files
+  // Serve static assets with cache
   app.use(express.static(distPath, { 
     maxAge: "1d",
-    etag: false 
+    etag: false,
+    index: false  // Don't auto-serve index.html, we handle it below
   }));
 
-  // fall through to index.html for all other routes (SPA routing)
-  app.use("*", (_req, res) => {
+  // SPA routing: serve index.html for all non-API, non-static requests
+  app.use("*", (req, res) => {
+    // Don't catch API requests
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ message: "API endpoint not found" });
+    }
+    
     const indexPath = path.resolve(distPath, "index.html");
     if (fs.existsSync(indexPath)) {
+      res.set("Content-Type", "text/html");
       res.sendFile(indexPath);
     } else {
       res.status(404).send("index.html not found");

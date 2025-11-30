@@ -77,8 +77,8 @@ export default async function runApp(
     throw err;
   });
 
-  // importantly run the final setup after setting up all the other routes so
-  // the catch-all route doesn't interfere with the other routes
+  // Setup static file serving - MUST be after API routes but before catch-all
+  // This serves the frontend and handles SPA routing
   await setup(app, server);
 
   // ALWAYS serve the app on the port specified in the environment variable PORT

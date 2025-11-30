@@ -1,0 +1,1218 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// server/index-prod.ts
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import express2 from "express";
+
+// server/app.ts
+import express from "express";
+
+// server/routes.ts
+import { createServer } from "http";
+
+// shared/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  feedback: () => feedback,
+  insertFeedbackSchema: () => insertFeedbackSchema,
+  insertMessageSchema: () => insertMessageSchema,
+  insertNotificationSchema: () => insertNotificationSchema,
+  insertPlayRequestSchema: () => insertPlayRequestSchema,
+  insertShopItemSchema: () => insertShopItemSchema,
+  insertShopRequestSchema: () => insertShopRequestSchema,
+  insertVideoStorySchema: () => insertVideoStorySchema,
+  loginSchema: () => loginSchema,
+  messages: () => messages,
+  messagesRelations: () => messagesRelations,
+  notifications: () => notifications,
+  notificationsRelations: () => notificationsRelations,
+  platform: () => platform,
+  playRequests: () => playRequests,
+  playRequestsRelations: () => playRequestsRelations,
+  requestStatus: () => requestStatus,
+  sessions: () => sessions,
+  shopItems: () => shopItems,
+  shopItemsRelations: () => shopItemsRelations,
+  shopRequests: () => shopRequests,
+  shopRequestsRelations: () => shopRequestsRelations,
+  signupSchema: () => signupSchema,
+  updateProfileSchema: () => updateProfileSchema,
+  upsertUserSchema: () => upsertUserSchema,
+  userRole: () => userRole,
+  users: () => users,
+  usersRelations: () => usersRelations,
+  videoStories: () => videoStories,
+  videoStoriesRelations: () => videoStoriesRelations
+});
+import { sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+  boolean,
+  pgEnum
+} from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+var userRole = pgEnum("user_role", ["owner", "admin", "media", "developer", "player", "seller"]);
+var platform = pgEnum("platform", ["playstation", "xbox", "pc", "switch", "mobile"]);
+var requestStatus = pgEnum("request_status", ["pending", "accepted", "rejected"]);
+var sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull()
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)]
+);
+var users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  // Authentication fields
+  username: varchar("username").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  // Profile fields
+  birthDate: timestamp("birth_date"),
+  gender: varchar("gender"),
+  // 'male', 'female', 'other'
+  // Gaming platform fields
+  role: userRole("role").notNull().default("player"),
+  age: integer("age"),
+  selectedPlatform: platform("selected_platform"),
+  bio: text("bio"),
+  favoriteGames: text("favorite_games").array(),
+  isOnline: boolean("is_online").default(false)
+});
+var shopItems = pgTable("shop_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  price: varchar("price").notNull(),
+  currency: varchar("currency").notNull().default("USD"),
+  // USD, IQD
+  imageUrl: varchar("image_url"),
+  category: varchar("category"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var shopRequests = pgTable("shop_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  itemId: varchar("item_id").notNull().references(() => shopItems.id),
+  status: requestStatus("status").notNull().default("pending"),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var playRequests = pgTable("play_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull().references(() => users.id),
+  toUserId: varchar("to_user_id").notNull().references(() => users.id),
+  game: varchar("game").notNull(),
+  message: text("message"),
+  status: requestStatus("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull().references(() => users.id),
+  toUserId: varchar("to_user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var videoStories = pgTable("video_stories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  videoUrl: varchar("video_url").notNull(),
+  thumbnailUrl: varchar("thumbnail_url"),
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  title: varchar("title").notNull(),
+  message: text("message"),
+  type: varchar("type").notNull(),
+  // 'message', 'request', 'shop', 'play'
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var feedback = pgTable("feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(),
+  // 'bug', 'feature', 'improvement', 'general'
+  rating: integer("rating"),
+  // 1-5 star rating
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var usersRelations = relations(users, ({ many }) => ({
+  shopRequests: many(shopRequests),
+  sentPlayRequests: many(playRequests, { relationName: "sentPlayRequests" }),
+  receivedPlayRequests: many(playRequests, { relationName: "receivedPlayRequests" }),
+  sentMessages: many(messages, { relationName: "sentMessages" }),
+  receivedMessages: many(messages, { relationName: "receivedMessages" }),
+  videoStories: many(videoStories)
+}));
+var shopItemsRelations = relations(shopItems, ({ many }) => ({
+  requests: many(shopRequests)
+}));
+var shopRequestsRelations = relations(shopRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [shopRequests.userId],
+    references: [users.id]
+  }),
+  item: one(shopItems, {
+    fields: [shopRequests.itemId],
+    references: [shopItems.id]
+  })
+}));
+var playRequestsRelations = relations(playRequests, ({ one }) => ({
+  fromUser: one(users, {
+    fields: [playRequests.fromUserId],
+    references: [users.id],
+    relationName: "sentPlayRequests"
+  }),
+  toUser: one(users, {
+    fields: [playRequests.toUserId],
+    references: [users.id],
+    relationName: "receivedPlayRequests"
+  })
+}));
+var messagesRelations = relations(messages, ({ one }) => ({
+  fromUser: one(users, {
+    fields: [messages.fromUserId],
+    references: [users.id],
+    relationName: "sentMessages"
+  }),
+  toUser: one(users, {
+    fields: [messages.toUserId],
+    references: [users.id],
+    relationName: "receivedMessages"
+  })
+}));
+var videoStoriesRelations = relations(videoStories, ({ one }) => ({
+  user: one(users, {
+    fields: [videoStories.userId],
+    references: [users.id]
+  })
+}));
+var notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id]
+  })
+}));
+var signupSchema = z.object({
+  username: z.string().min(3).max(20),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email().optional().or(z.literal("")),
+  birthDate: z.string().refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), "Invalid date format").optional().or(z.literal("")),
+  gender: z.enum(["male", "female", "other"]).optional()
+});
+var loginSchema = z.object({
+  username: z.string(),
+  password: z.string()
+});
+var upsertUserSchema = createInsertSchema(users).pick({
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true
+}).partial();
+var updateProfileSchema = createInsertSchema(users).pick({
+  age: true,
+  selectedPlatform: true,
+  bio: true,
+  favoriteGames: true,
+  profileImageUrl: true
+});
+var insertShopItemSchema = createInsertSchema(shopItems).omit({ id: true, createdAt: true, ownerId: true });
+var insertFeedbackSchema = createInsertSchema(feedback).omit({ id: true, createdAt: true, userId: true });
+var insertShopRequestSchema = createInsertSchema(shopRequests).omit({ id: true, createdAt: true, status: true, userId: true });
+var insertPlayRequestSchema = createInsertSchema(playRequests).omit({ id: true, createdAt: true, status: true });
+var insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true, read: true, fromUserId: true });
+var insertVideoStorySchema = createInsertSchema(videoStories).omit({ id: true, createdAt: true, likes: true });
+var insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, read: true });
+
+// server/db.ts
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
+neonConfig.webSocketConstructor = ws;
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?"
+  );
+}
+var pool = new Pool({ connectionString: process.env.DATABASE_URL });
+var db = drizzle({ client: pool, schema: schema_exports });
+
+// server/storage.ts
+import { eq, and, or, desc, sql as sql2 } from "drizzle-orm";
+var DatabaseStorage = class {
+  // Normalize user data - fix case-sensitivity issues with gaming platform
+  normalizeUser(user) {
+    if (!user || typeof user !== "object") return user;
+    const normalized = { ...user };
+    if ("selectedPlatform" in normalized && normalized.selectedPlatform) {
+      const platform2 = normalized.selectedPlatform;
+      if (platform2 && !["playstation", "xbox", "pc", "switch", "mobile"].includes(platform2)) {
+        normalized.selectedPlatform = platform2.toLowerCase();
+      }
+    }
+    return normalized;
+  }
+  // User operations
+  async getUser(id) {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user ? this.normalizeUser(user) : void 0;
+  }
+  async getUserByUsername(username) {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user ? this.normalizeUser(user) : void 0;
+  }
+  async createUser(data) {
+    const [user] = await db.insert(users).values({
+      username: data.username,
+      passwordHash: data.passwordHash,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email || null,
+      birthDate: data.birthDate || null,
+      gender: data.gender || null
+    }).returning();
+    return this.normalizeUser(user);
+  }
+  async upsertUser(userData) {
+    if (userData.id) {
+      const existing = await this.getUser(userData.id);
+      if (existing) {
+        const [user2] = await db.update(users).set({ ...userData, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, userData.id)).returning();
+        return this.normalizeUser(user2);
+      }
+    }
+    const [user] = await db.insert(users).values({
+      ...userData,
+      username: userData.firstName && userData.lastName ? `${userData.firstName.toLowerCase()}-${userData.lastName.toLowerCase()}` : `user-${Math.random().toString(36).substr(2, 9)}`,
+      passwordHash: "oauth-user",
+      role: "player"
+    }).returning();
+    return this.normalizeUser(user);
+  }
+  async updateUserProfile(id, profile) {
+    const [user] = await db.update(users).set({ ...profile, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, id)).returning();
+    return this.normalizeUser(user);
+  }
+  async updateUserRole(id, role) {
+    const [user] = await db.update(users).set({ role, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, id)).returning();
+    return this.normalizeUser(user);
+  }
+  async getAllPlayers() {
+    const playersList = await db.select().from(users).orderBy(desc(users.createdAt));
+    return playersList.map((u) => this.normalizeUser(u));
+  }
+  async updateUserOnlineStatus(id, isOnline) {
+    const [user] = await db.update(users).set({ isOnline, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, id)).returning();
+    return this.normalizeUser(user);
+  }
+  async deleteUser(id) {
+    await db.delete(shopRequests).where(eq(shopRequests.userId, id));
+    await db.delete(shopItems).where(eq(shopItems.ownerId, id));
+    await db.delete(playRequests).where(or(eq(playRequests.fromUserId, id), eq(playRequests.toUserId, id)));
+    await db.delete(messages).where(or(eq(messages.fromUserId, id), eq(messages.toUserId, id)));
+    await db.delete(videoStories).where(eq(videoStories.userId, id));
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    await db.delete(users).where(eq(users.id, id));
+  }
+  // Shop operations
+  async getAllShopItems() {
+    return await db.select().from(shopItems).orderBy(desc(shopItems.createdAt));
+  }
+  async getShopItem(id) {
+    const [item] = await db.select().from(shopItems).where(eq(shopItems.id, id));
+    return item;
+  }
+  async createShopItem(item) {
+    const [shopItem] = await db.insert(shopItems).values(item).returning();
+    return shopItem;
+  }
+  async deleteShopItem(id) {
+    await db.delete(shopRequests).where(eq(shopRequests.itemId, id));
+    await db.delete(shopItems).where(eq(shopItems.id, id));
+  }
+  async createShopRequest(request) {
+    const [shopRequest] = await db.insert(shopRequests).values(request).returning();
+    return shopRequest;
+  }
+  async getUserShopRequests(userId) {
+    return await db.select().from(shopRequests).where(eq(shopRequests.userId, userId)).orderBy(desc(shopRequests.createdAt));
+  }
+  async deleteShopRequest(id) {
+    await db.delete(shopRequests).where(eq(shopRequests.id, id));
+  }
+  // Play request operations
+  async createPlayRequest(request) {
+    const [playRequest] = await db.insert(playRequests).values(request).returning();
+    return playRequest;
+  }
+  async getUserPlayRequests(userId) {
+    return await db.select().from(playRequests).where(
+      or(
+        eq(playRequests.fromUserId, userId),
+        eq(playRequests.toUserId, userId)
+      )
+    ).orderBy(desc(playRequests.createdAt));
+  }
+  async updatePlayRequestStatus(id, status) {
+    const [playRequest] = await db.update(playRequests).set({ status }).where(eq(playRequests.id, id)).returning();
+    return playRequest;
+  }
+  // Message operations
+  async createMessage(message) {
+    const [msg] = await db.insert(messages).values(message).returning();
+    return msg;
+  }
+  async getConversations(userId) {
+    const conversations = await db.select({
+      user: users,
+      lastMessage: messages
+    }).from(messages).leftJoin(
+      users,
+      or(
+        and(eq(messages.fromUserId, userId), eq(users.id, messages.toUserId)),
+        and(eq(messages.toUserId, userId), eq(users.id, messages.fromUserId))
+      )
+    ).where(
+      or(
+        eq(messages.fromUserId, userId),
+        eq(messages.toUserId, userId)
+      )
+    ).orderBy(desc(messages.createdAt));
+    const conversationMap = /* @__PURE__ */ new Map();
+    for (const conv of conversations) {
+      if (!conv.user) continue;
+      const existingConv = conversationMap.get(conv.user.id);
+      if (!existingConv || new Date(conv.lastMessage.createdAt) > new Date(existingConv.lastMessage.createdAt)) {
+        conversationMap.set(conv.user.id, {
+          user: this.normalizeUser(conv.user),
+          lastMessage: conv.lastMessage,
+          unreadCount: 0
+          // TODO: Implement unread count
+        });
+      }
+    }
+    return Array.from(conversationMap.values());
+  }
+  async getMessages(userId, otherUserId) {
+    const msgs = await db.select({
+      id: messages.id,
+      content: messages.content,
+      read: messages.read,
+      createdAt: messages.createdAt,
+      fromUserId: messages.fromUserId,
+      toUserId: messages.toUserId,
+      fromUser: users
+    }).from(messages).leftJoin(users, eq(messages.fromUserId, users.id)).where(
+      or(
+        and(eq(messages.fromUserId, userId), eq(messages.toUserId, otherUserId)),
+        and(eq(messages.fromUserId, otherUserId), eq(messages.toUserId, userId))
+      )
+    ).orderBy(messages.createdAt);
+    return msgs.map((msg) => ({
+      ...msg,
+      fromUser: msg.fromUser ? this.normalizeUser(msg.fromUser) : null,
+      toUser: null
+      // Not needed for display
+    }));
+  }
+  async deleteMessage(id) {
+    await db.delete(messages).where(eq(messages.id, id));
+  }
+  // Video story operations
+  async createVideoStory(story) {
+    const [videoStory] = await db.insert(videoStories).values(story).returning();
+    return videoStory;
+  }
+  async getAllVideoStories() {
+    const stories = await db.select({
+      id: videoStories.id,
+      title: videoStories.title,
+      description: videoStories.description,
+      videoUrl: videoStories.videoUrl,
+      thumbnailUrl: videoStories.thumbnailUrl,
+      likes: videoStories.likes,
+      createdAt: videoStories.createdAt,
+      userId: videoStories.userId,
+      user: users
+    }).from(videoStories).leftJoin(users, eq(videoStories.userId, users.id)).orderBy(desc(videoStories.createdAt));
+    return stories.map((s) => ({
+      ...s,
+      user: s.user ? this.normalizeUser(s.user) : null
+    }));
+  }
+  async getUserVideoStories(userId) {
+    const stories = await db.select({
+      id: videoStories.id,
+      title: videoStories.title,
+      description: videoStories.description,
+      videoUrl: videoStories.videoUrl,
+      thumbnailUrl: videoStories.thumbnailUrl,
+      likes: videoStories.likes,
+      createdAt: videoStories.createdAt,
+      userId: videoStories.userId,
+      user: users
+    }).from(videoStories).leftJoin(users, eq(videoStories.userId, users.id)).where(eq(videoStories.userId, userId)).orderBy(desc(videoStories.createdAt));
+    return stories.map((s) => ({
+      ...s,
+      user: s.user ? this.normalizeUser(s.user) : null
+    }));
+  }
+  async getVideoStory(id) {
+    const [story] = await db.select({
+      id: videoStories.id,
+      title: videoStories.title,
+      description: videoStories.description,
+      videoUrl: videoStories.videoUrl,
+      thumbnailUrl: videoStories.thumbnailUrl,
+      likes: videoStories.likes,
+      createdAt: videoStories.createdAt,
+      userId: videoStories.userId,
+      user: users
+    }).from(videoStories).leftJoin(users, eq(videoStories.userId, users.id)).where(eq(videoStories.id, id));
+    return story ? { ...story, user: story.user ? this.normalizeUser(story.user) : null } : void 0;
+  }
+  async likeVideoStory(id) {
+    const [story] = await db.update(videoStories).set({ likes: sql2`${videoStories.likes} + 1` }).where(eq(videoStories.id, id)).returning();
+    return story;
+  }
+  async deleteVideoStory(id) {
+    await db.delete(videoStories).where(eq(videoStories.id, id));
+  }
+  // Notification operations
+  async createNotification(notification) {
+    const [notif] = await db.insert(notifications).values(notification).returning();
+    return notif;
+  }
+  async getUserNotifications(userId) {
+    const notifs = await db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+    return notifs;
+  }
+  async deleteNotification(id) {
+    await db.delete(notifications).where(eq(notifications.id, id));
+  }
+  async markNotificationRead(id) {
+    const [notif] = await db.update(notifications).set({ read: true }).where(eq(notifications.id, id)).returning();
+    return notif;
+  }
+};
+var storage = new DatabaseStorage();
+
+// server/auth.ts
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import bcryptjs from "bcryptjs";
+function getSession() {
+  const sessionTtl = 7 * 24 * 60 * 60 * 1e3;
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions"
+  });
+  return session({
+    secret: process.env.SESSION_SECRET,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      maxAge: sessionTtl
+    }
+  });
+}
+async function setupAuth(app2) {
+  app2.set("trust proxy", 1);
+  app2.use(getSession());
+  app2.use(passport.initialize());
+  app2.use(passport.session());
+  passport.use(
+    new LocalStrategy(async (username, password, done) => {
+      try {
+        const user = await storage.getUserByUsername(username);
+        if (!user) {
+          return done(null, false, { message: "User not found" });
+        }
+        const isValidPassword = await bcryptjs.compare(password, user.passwordHash);
+        if (!isValidPassword) {
+          return done(null, false, { message: "Invalid password" });
+        }
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
+    })
+  );
+  passport.serializeUser((user, cb) => cb(null, user?.id));
+  passport.deserializeUser(async (id, cb) => {
+    try {
+      if (!id) {
+        return cb(null, null);
+      }
+      const user = await storage.getUser(id);
+      cb(null, user || null);
+    } catch (err) {
+      cb(null, null);
+    }
+  });
+  app2.get("/api/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.redirect("/");
+    });
+  });
+}
+var isAuthenticated = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+};
+async function hashPassword(password) {
+  return bcryptjs.hash(password, 10);
+}
+
+// server/routes.ts
+import passport2 from "passport";
+import { z as z2 } from "zod";
+async function registerRoutes(app2) {
+  await setupAuth(app2);
+  try {
+    const bo3Item = await storage.getShopItem("bo3-liquid-featured");
+    if (!bo3Item) {
+      let systemOwner = await storage.getUserByUsername("system-featured");
+      if (!systemOwner) {
+        systemOwner = await storage.createUser({
+          username: "system-featured",
+          passwordHash: "system",
+          firstName: "System",
+          lastName: "Featured"
+        });
+      }
+      await storage.createShopItem({
+        id: "bo3-liquid-featured",
+        title: "BO3 Liquid",
+        description: "Premium energized gaming liquid fuel. Experience ultimate gaming performance with our exclusive BO3 formula. Designed for hardcore gamers who demand the best. Perfect for marathon gaming sessions.",
+        price: "Contact for pricing",
+        currency: "USD",
+        category: "Gaming Beverages",
+        ownerId: systemOwner.id
+      });
+    }
+  } catch (error) {
+    console.log("BO3 Liquid item already exists or error initializing:", error);
+  }
+  app2.post("/api/auth/signup", async (req, res) => {
+    try {
+      const validatedData = signupSchema.parse(req.body);
+      const existingUser = await storage.getUserByUsername(validatedData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      const passwordHash = await hashPassword(validatedData.password);
+      const user = await storage.createUser({
+        username: validatedData.username,
+        passwordHash,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        email: validatedData.email,
+        birthDate: validatedData.birthDate ? new Date(validatedData.birthDate) : void 0,
+        gender: validatedData.gender
+      });
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed after signup" });
+        }
+        res.json(user);
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(400).json({ message: error.message || "Failed to create user" });
+    }
+  });
+  app2.post("/api/auth/login", passport2.authenticate("local"), (req, res) => {
+    res.json(req.user);
+  });
+  app2.get("/api/auth/user", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  app2.patch("/api/profile", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const validatedData = updateProfileSchema.parse(req.body);
+      const user = await storage.updateUserProfile(userId, validatedData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(400).json({ message: error.message || "Failed to update profile" });
+    }
+  });
+  app2.patch("/api/profile/role", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { role, password } = req.body;
+      const ROLE_PASSWORD = "rahand20115";
+      if (password !== ROLE_PASSWORD) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      const validRoles = ["owner", "admin", "media", "developer", "player", "seller"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      const user = await storage.updateUserRole(userId, role);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      res.status(400).json({ message: error.message || "Failed to update role" });
+    }
+  });
+  app2.patch("/api/admin/assign-role", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = req.user;
+      const { targetUserId, role } = req.body;
+      if (currentUser?.role !== "owner") {
+        return res.status(403).json({ message: "Only owners can assign roles" });
+      }
+      const validRoles = ["owner", "admin", "media", "developer", "player"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      const targetUser = await storage.updateUserRole(targetUserId, role);
+      res.json(targetUser);
+    } catch (error) {
+      console.error("Error assigning role:", error);
+      res.status(400).json({ message: error.message || "Failed to assign role" });
+    }
+  });
+  app2.get("/api/players", isAuthenticated, async (req, res) => {
+    try {
+      const players = await storage.getAllPlayers();
+      res.json(players);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+      res.status(500).json({ message: "Failed to fetch players" });
+    }
+  });
+  app2.post("/api/heartbeat", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      await storage.updateUserOnlineStatus(userId, true);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating heartbeat:", error);
+      res.status(500).json({ message: "Failed to update heartbeat" });
+    }
+  });
+  app2.post("/api/offline", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      await storage.updateUserOnlineStatus(userId, false);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking user offline:", error);
+      res.status(500).json({ message: "Failed to mark offline" });
+    }
+  });
+  app2.get("/api/shop/items", isAuthenticated, async (req, res) => {
+    try {
+      const items = await storage.getAllShopItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching shop items:", error);
+      res.status(500).json({ message: "Failed to fetch shop items" });
+    }
+  });
+  app2.get("/api/shop/requests", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const requests = await storage.getUserShopRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching shop requests:", error);
+      res.status(500).json({ message: "Failed to fetch shop requests" });
+    }
+  });
+  app2.patch("/api/shop/requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user?.id;
+      if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const updated = await storage.updatePlayRequestStatus(id, status);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating shop request:", error);
+      res.status(400).json({ message: error.message || "Failed to update request" });
+    }
+  });
+  app2.delete("/api/shop/requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteShopRequest(id);
+      res.json({ message: "Order removed successfully" });
+    } catch (error) {
+      console.error("Error deleting shop request:", error);
+      res.status(400).json({ message: error.message || "Failed to delete request" });
+    }
+  });
+  app2.post("/api/shop/items", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== "owner" && currentUser?.role !== "seller") {
+        return res.status(403).json({ message: "Only owners and sellers can add items to the shop" });
+      }
+      const validatedData = insertShopItemSchema.parse(req.body);
+      const item = await storage.createShopItem({ ...validatedData, ownerId: currentUser.id });
+      res.json(item);
+    } catch (error) {
+      console.error("Error creating shop item:", error);
+      res.status(400).json({ message: error.message || "Failed to create shop item" });
+    }
+  });
+  app2.delete("/api/shop/items/:id", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = req.user;
+      if (currentUser?.role !== "owner" && currentUser?.role !== "seller") {
+        return res.status(403).json({ message: "Only owners and sellers can delete items" });
+      }
+      const { id } = req.params;
+      await storage.deleteShopItem(id);
+      res.json({ message: "Item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting shop item:", error);
+      res.status(400).json({ message: error.message || "Failed to delete shop item" });
+    }
+  });
+  app2.post("/api/shop/requests", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const currentUser = req.user;
+      const validatedData = insertShopRequestSchema.parse(req.body);
+      const request = await storage.createShopRequest({ ...validatedData, userId });
+      const item = await storage.getShopItem(validatedData.itemId);
+      if (item && item.ownerId) {
+        const username = currentUser?.username || currentUser?.firstName || "A player";
+        await storage.createNotification({
+          userId: item.ownerId,
+          title: `New Shop Request for ${item.title}`,
+          message: `${username} requested to buy ${item.title}`,
+          type: "shop"
+        });
+      }
+      res.json(request);
+    } catch (error) {
+      console.error("Error creating shop request:", error);
+      res.status(400).json({ message: error.message || "Failed to create shop request" });
+    }
+  });
+  app2.get("/api/shop/requests", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const requests = await storage.getUserShopRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching shop requests:", error);
+      res.status(500).json({ message: "Failed to fetch shop requests" });
+    }
+  });
+  app2.post("/api/play-requests", isAuthenticated, async (req, res) => {
+    try {
+      const fromUserId = req.user?.id;
+      const fromUser = req.user;
+      const { toUserId, game, message } = req.body;
+      const bodySchema = z2.object({
+        toUserId: z2.string().min(1),
+        game: z2.string().min(1),
+        message: z2.string().optional()
+      });
+      const validatedBody = bodySchema.parse({ toUserId, game, message });
+      const request = await storage.createPlayRequest({ ...validatedBody, fromUserId });
+      const username = fromUser?.username || fromUser?.firstName || "A player";
+      await storage.createNotification({
+        userId: toUserId,
+        title: `New Play Request from ${username}`,
+        message: `${username} wants to play ${game} with you`,
+        type: "play"
+      });
+      res.json(request);
+    } catch (error) {
+      console.error("Error creating play request:", error);
+      res.status(400).json({ message: error.message || "Failed to create play request" });
+    }
+  });
+  app2.get("/api/play-requests", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const requests = await storage.getUserPlayRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching play requests:", error);
+      res.status(500).json({ message: "Failed to fetch play requests" });
+    }
+  });
+  app2.patch("/api/play-requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const request = await storage.updatePlayRequestStatus(id, status);
+      res.json(request);
+    } catch (error) {
+      console.error("Error updating play request:", error);
+      res.status(400).json({ message: error.message || "Failed to update play request" });
+    }
+  });
+  const typingIndicators = /* @__PURE__ */ new Map();
+  app2.post("/api/typing", isAuthenticated, async (req, res) => {
+    try {
+      const fromUserId = req.user?.id;
+      const { toUserId } = req.body;
+      if (!toUserId) {
+        return res.status(400).json({ message: "toUserId required" });
+      }
+      const key = `${fromUserId}-${toUserId}`;
+      typingIndicators.set(key, { userId: fromUserId, expiresAt: Date.now() + 3e3 });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting typing indicator:", error);
+      res.status(400).json({ message: "Failed to set typing indicator" });
+    }
+  });
+  app2.get("/api/typing-status/:fromUserId", isAuthenticated, async (req, res) => {
+    try {
+      const toUserId = req.user?.id;
+      const { fromUserId } = req.params;
+      const key = `${fromUserId}-${toUserId}`;
+      const typing = typingIndicators.get(key);
+      if (typing && typing.expiresAt < Date.now()) {
+        typingIndicators.delete(key);
+        return res.json({ isTyping: false });
+      }
+      res.json({ isTyping: !!typing });
+    } catch (error) {
+      console.error("Error getting typing status:", error);
+      res.status(400).json({ message: "Failed to get typing status" });
+    }
+  });
+  app2.get("/api/conversations", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const conversations = await storage.getConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+  app2.get("/api/messages/:otherUserId", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { otherUserId } = req.params;
+      const messages2 = await storage.getMessages(userId, otherUserId);
+      res.json(messages2);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+  app2.post("/api/messages", isAuthenticated, async (req, res) => {
+    try {
+      const fromUserId = req.user?.id;
+      const validatedData = insertMessageSchema.parse(req.body);
+      const message = await storage.createMessage({ ...validatedData, fromUserId });
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(400).json({ message: error.message || "Failed to create message" });
+    }
+  });
+  app2.delete("/api/messages/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMessage(id);
+      res.json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(400).json({ message: error.message || "Failed to delete message" });
+    }
+  });
+  app2.get("/api/stories", isAuthenticated, async (req, res) => {
+    try {
+      const stories = await storage.getAllVideoStories();
+      res.json(stories);
+    } catch (error) {
+      console.error("Error fetching stories:", error);
+      res.status(500).json({ message: "Failed to fetch stories" });
+    }
+  });
+  app2.post("/api/stories", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole2 = req.user?.role;
+      if (userRole2 !== "media") {
+        return res.status(403).json({ message: "Only users with media role can post stories" });
+      }
+      const validatedData = insertVideoStorySchema.parse(req.body);
+      const story = await storage.createVideoStory({ ...validatedData, userId });
+      res.json(story);
+    } catch (error) {
+      console.error("Error creating story:", error);
+      res.status(400).json({ message: error.message || "Failed to create story" });
+    }
+  });
+  app2.get("/api/stories/my-stories", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const stories = await storage.getUserVideoStories(userId);
+      res.json(stories);
+    } catch (error) {
+      console.error("Error fetching user stories:", error);
+      res.status(500).json({ message: "Failed to fetch your stories" });
+    }
+  });
+  app2.delete("/api/stories/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const story = await storage.getVideoStory(id);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      if (story.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own stories" });
+      }
+      await storage.deleteVideoStory(id);
+      res.json({ message: "Story deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting story:", error);
+      res.status(400).json({ message: error.message || "Failed to delete story" });
+    }
+  });
+  app2.post("/api/stories/:id/like", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const story = await storage.likeVideoStory(id);
+      res.json(story);
+    } catch (error) {
+      console.error("Error liking story:", error);
+      res.status(400).json({ message: error.message || "Failed to like story" });
+    }
+  });
+  app2.get("/api/notifications", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const notifs = await storage.getUserNotifications(userId);
+      res.json(notifs);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+  app2.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteNotification(id);
+      res.json({ message: "Notification deleted" });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(400).json({ message: error.message || "Failed to delete notification" });
+    }
+  });
+  app2.patch("/api/notifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const notif = await storage.markNotificationRead(id);
+      res.json(notif);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(400).json({ message: error.message || "Failed to mark notification as read" });
+    }
+  });
+  app2.get("/api/users", isAuthenticated, async (req, res) => {
+    try {
+      const userRole2 = req.user?.role;
+      if (userRole2 !== "developer") {
+        return res.status(403).json({ message: "Only developers can view users" });
+      }
+      const allUsers = await storage.getAllPlayers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(400).json({ message: error.message || "Failed to fetch users" });
+    }
+  });
+  app2.delete("/api/users/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const userRole2 = req.user?.role;
+      if (userRole2 !== "developer") {
+        return res.status(403).json({ message: "Only developers can delete users" });
+      }
+      await storage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(400).json({ message: error.message || "Failed to delete user" });
+    }
+  });
+  app2.delete("/api/account", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole2 = req.user?.role;
+      if (userRole2 !== "developer") {
+        return res.status(403).json({ message: "Only developers can delete their account" });
+      }
+      await storage.deleteUser(userId);
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(400).json({ message: error.message || "Failed to delete account" });
+    }
+  });
+  const httpServer = createServer(app2);
+  return httpServer;
+}
+
+// server/app.ts
+function log(message, source = "express") {
+  const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
+var app = express();
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+app.use(express.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path2 = req.path;
+  let capturedJsonResponse = void 0;
+  const originalResJson = res.json;
+  res.json = function(bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
+  };
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path2.startsWith("/api")) {
+      let logLine = `${req.method} ${path2} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "\u2026";
+      }
+      log(logLine);
+    }
+  });
+  next();
+});
+async function runApp(setup) {
+  const server = await registerRoutes(app);
+  app.use((err, _req, res, _next) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    res.status(status).json({ message });
+    throw err;
+  });
+  await setup(app, server);
+  const port = parseInt(process.env.PORT || "5000", 10);
+  server.listen({
+    port,
+    host: "0.0.0.0",
+    reusePort: true
+  }, () => {
+    log(`serving on port ${port}`);
+  });
+}
+
+// server/index-prod.ts
+async function serveStatic(app2, _server) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const distPath = path.resolve(__dirname, "public");
+  console.log("[prod] Attempting to serve static files from:", distPath);
+  console.log("[prod] Directory exists:", fs.existsSync(distPath));
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
+    );
+  }
+  app2.use(express2.static(distPath, {
+    maxAge: "1d",
+    etag: false
+  }));
+  app2.use("*", (_req, res) => {
+    const indexPath = path.resolve(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("index.html not found");
+    }
+  });
+}
+(async () => {
+  await runApp(serveStatic);
+})();
+export {
+  serveStatic
+};
