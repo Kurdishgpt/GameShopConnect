@@ -1,12 +1,21 @@
 import fs from "node:fs";
 import path from "node:path";
 import { type Server } from "node:http";
+import { fileURLToPath } from "node:url";
 
 import express, { type Express } from "express";
 import runApp from "./app";
 
 export async function serveStatic(app: Express, _server: Server) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Get the directory of this file, accounting for bundling
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  
+  // Public directory is alongside index.js in dist/
+  const distPath = path.resolve(__dirname, "public");
+
+  console.log("[prod] Attempting to serve static files from:", distPath);
+  console.log("[prod] Directory exists:", fs.existsSync(distPath));
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -14,11 +23,20 @@ export async function serveStatic(app: Express, _server: Server) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve static files
+  app.use(express.static(distPath, { 
+    maxAge: "1d",
+    etag: false 
+  }));
 
-  // fall through to index.html if the file doesn't exist
+  // fall through to index.html for all other routes (SPA routing)
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexPath = path.resolve(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("index.html not found");
+    }
   });
 }
 
