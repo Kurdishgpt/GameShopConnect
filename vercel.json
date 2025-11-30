@@ -2,17 +2,15 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "DATABASE_URL": "@DATABASE_URL",
-    "SESSION_SECRET": "@SESSION_SECRET"
-  },
+  "framework": "other",
+  "buildOutputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/index.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|_next|_static|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]
