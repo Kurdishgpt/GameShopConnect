@@ -21,8 +21,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { User, Crown, Shield, Camera, Code, Gamepad2, Store, Edit2, Check, X } from "lucide-react";
+import { User, Crown, Shield, Camera, Code, Gamepad2, Store, Edit2, Check, X, Settings, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 const profileFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -40,6 +41,7 @@ export default function Account() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const [, navigate] = useLocation();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -175,6 +177,38 @@ export default function Account() {
             </div>
           </div>
         </div>
+
+        {/* Setup Profile Section */}
+        <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="bg-gradient-to-r from-primary/15 to-primary/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/20 p-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Complete Your Profile</CardTitle>
+                  <CardDescription>Set up additional details and preferences</CardDescription>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate("/profile-setup")}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                data-testid="button-go-to-setup"
+              >
+                Setup Profile
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">
+              Complete your profile with additional information like gaming platform, preferences, and more to enhance your gaming experience and connect better with other players.
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Profile Section */}
         <Card className="overflow-hidden">
