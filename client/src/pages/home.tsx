@@ -39,8 +39,6 @@ export default function Home() {
     );
   }
 
-  const needsProfile = !user?.username || !user?.selectedPlatform || !user?.age;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/10">
       {/* Animated Background Elements */}
@@ -93,28 +91,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Profile Setup Alert */}
-        {needsProfile && (
-          <div className="mb-16 bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 border border-primary/50 rounded-2xl p-8 md:p-10 backdrop-blur-sm shadow-2xl shadow-primary/20">
-            <div className="flex items-start gap-6">
-              <div className="rounded-xl bg-gradient-to-br from-primary/40 to-accent/40 p-4 flex-shrink-0 shadow-lg">
-                <Gamepad2 className="h-8 w-8 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-2xl font-bold mb-3">Complete Your Gaming Profile</h3>
-                <p className="text-muted-foreground mb-6 text-lg">
-                  Unlock all features by setting up your gaming profile. Start finding teammates, earning badges, and joining an epic community.
-                </p>
-                <Link href="/profile-setup">
-                  <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent">
-                    Setup Profile Now
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Feature Cards - Enhanced */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
