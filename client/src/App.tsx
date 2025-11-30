@@ -21,6 +21,7 @@ import SellItems from "@/pages/sell-items";
 import Seller from "@/pages/seller";
 import Notifications from "@/pages/notifications";
 import Feedback from "@/pages/feedback";
+import Account from "@/pages/account";
 import DataCentre from "@/pages/data-centre";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
@@ -82,6 +83,7 @@ function Router() {
               <Route path="/seller" component={Seller} />
               <Route path="/notifications" component={Notifications} />
               <Route path="/feedback" component={Feedback} />
+              <Route path="/account" component={Account} />
               <Route path="/data-centre" component={DataCentre} />
               <Route component={NotFound} />
             </Switch>

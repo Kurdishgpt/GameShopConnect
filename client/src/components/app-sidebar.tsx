@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare, Store, Database } from "lucide-react";
+import { Home, ShoppingBag, Users, Video, Crown, Shield, Camera, Code, Gamepad2, MessageSquare, Store, Database, User as UserIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ const menuItems = [
   { title: "Find Player", url: "/find-player", icon: Users },
   { title: "Story Games", url: "/stories", icon: Video },
   { title: "Feedback", url: "/feedback", icon: MessageSquare },
+  { title: "Account", url: "/account", icon: UserIcon },
 ];
 
 const ownerMenuItems = [
