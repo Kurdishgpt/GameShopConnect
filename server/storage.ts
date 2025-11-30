@@ -81,15 +81,29 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Normalize user data - fix case-sensitivity issues with gaming platform
+  private normalizeUser<T extends any>(user: T): T {
+    if (!user || typeof user !== 'object') return user;
+    const normalized = { ...user };
+    if ('selectedPlatform' in normalized && normalized.selectedPlatform) {
+      const platform = normalized.selectedPlatform as string;
+      if (platform && !['playstation', 'xbox', 'pc', 'switch', 'mobile'].includes(platform)) {
+        // Normalize to lowercase if not already a valid enum value
+        normalized.selectedPlatform = platform.toLowerCase();
+      }
+    }
+    return normalized;
+  }
+
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user ? this.normalizeUser(user) : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return user ? this.normalizeUser(user) : undefined;
   }
 
   async createUser(data: {
@@ -113,7 +127,7 @@ export class DatabaseStorage implements IStorage {
         gender: data.gender || null,
       })
       .returning();
-    return user;
+    return this.normalizeUser(user);
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -127,7 +141,7 @@ export class DatabaseStorage implements IStorage {
           .set({ ...userData, updatedAt: new Date() })
           .where(eq(users.id, userData.id))
           .returning();
-        return user;
+        return this.normalizeUser(user);
       }
     }
     
@@ -143,7 +157,7 @@ export class DatabaseStorage implements IStorage {
         role: 'player',
       })
       .returning();
-    return user;
+    return this.normalizeUser(user);
   }
 
   async updateUserProfile(id: string, profile: UpdateProfile): Promise<User> {
@@ -152,7 +166,7 @@ export class DatabaseStorage implements IStorage {
       .set({ ...profile, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return user;
+    return this.normalizeUser(user);
   }
 
   async updateUserRole(id: string, role: string): Promise<User> {
@@ -161,11 +175,12 @@ export class DatabaseStorage implements IStorage {
       .set({ role: role as any, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return user;
+    return this.normalizeUser(user);
   }
 
   async getAllPlayers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
+    const playersList = await db.select().from(users).orderBy(desc(users.createdAt));
+    return playersList.map(u => this.normalizeUser(u));
   }
 
   async updateUserOnlineStatus(id: string, isOnline: boolean): Promise<User> {
@@ -174,7 +189,7 @@ export class DatabaseStorage implements IStorage {
       .set({ isOnline, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
-    return user;
+    return this.normalizeUser(user);
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -291,7 +306,7 @@ export class DatabaseStorage implements IStorage {
       const existingConv = conversationMap.get(conv.user.id);
       if (!existingConv || new Date(conv.lastMessage.createdAt!) > new Date(existingConv.lastMessage.createdAt!)) {
         conversationMap.set(conv.user.id, {
-          user: conv.user,
+          user: this.normalizeUser(conv.user),
           lastMessage: conv.lastMessage,
           unreadCount: 0, // TODO: Implement unread count
         });
@@ -324,6 +339,7 @@ export class DatabaseStorage implements IStorage {
 
     return msgs.map(msg => ({
       ...msg,
+      fromUser: msg.fromUser ? this.normalizeUser(msg.fromUser) : null,
       toUser: null, // Not needed for display
     }));
   }
@@ -355,7 +371,10 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(videoStories.userId, users.id))
       .orderBy(desc(videoStories.createdAt));
 
-    return stories;
+    return stories.map(s => ({
+      ...s,
+      user: s.user ? this.normalizeUser(s.user) : null,
+    }));
   }
 
   async getUserVideoStories(userId: string): Promise<any[]> {
@@ -376,7 +395,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(videoStories.userId, userId))
       .orderBy(desc(videoStories.createdAt));
 
-    return stories;
+    return stories.map(s => ({
+      ...s,
+      user: s.user ? this.normalizeUser(s.user) : null,
+    }));
   }
 
   async getVideoStory(id: string): Promise<any | undefined> {
@@ -396,7 +418,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(videoStories.userId, users.id))
       .where(eq(videoStories.id, id));
 
-    return story;
+    return story ? { ...story, user: story.user ? this.normalizeUser(story.user) : null } : undefined;
   }
 
   async likeVideoStory(id: string): Promise<VideoStory> {
