@@ -20,6 +20,8 @@ export default function Messages() {
   const [messageText, setMessageText] = useState("");
   const [activeCall, setActiveCall] = useState<{ userId: string; type: "phone" | "video"; status: "ringing" | "connected" } | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const typingTimeoutRef = new Map<string, NodeJS.Timeout>();
 
   // Play sound effect
   const playSound = (type: "ring" | "connect" | "disconnect") => {
@@ -88,6 +90,29 @@ export default function Messages() {
       handleBeforeUnload();
     };
   }, [isAuthenticated, queryClient]);
+
+  // Listen for typing indicators
+  useEffect(() => {
+    if (!isAuthenticated || !selectedUserId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/typing-status/${selectedUserId}`, { credentials: "include" });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isTyping) {
+            setTypingUsers(new Set([selectedUserId]));
+          } else {
+            setTypingUsers(new Set());
+          }
+        }
+      } catch (error) {
+        console.error("Error checking typing status:", error);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, selectedUserId]);
 
   // Get userId from query params
   useEffect(() => {
@@ -177,6 +202,15 @@ export default function Messages() {
         content: messageText,
       });
     }
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageText(e.target.value);
+    
+    if (!selectedUserId) return;
+
+    // Send typing indicator
+    apiRequest("POST", "/api/typing", { toUserId: selectedUserId }).catch(() => {});
   };
 
   const selectedConversation = conversations?.find(c => c.user.id === selectedUserId);
@@ -529,12 +563,26 @@ export default function Messages() {
               </button>
             </div>
 
+            {/* Typing Indicator */}
+            {typingUsers.size > 0 && (
+              <div className="px-2 py-1">
+                <p className="text-xs text-cyan-300 italic flex items-center gap-1">
+                  <span className="inline-flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  </span>
+                  typing...
+                </p>
+              </div>
+            )}
+
             {/* Message Input */}
             <div className="flex gap-2">
               <Input
                 placeholder="Send a message..."
                 value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
+                onChange={handleTyping}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

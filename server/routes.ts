@@ -385,7 +385,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== TYPING INDICATOR STORAGE =====
+  const typingIndicators = new Map<string, { userId: string; expiresAt: number }>();
+
   // ===== MESSAGE ROUTES =====
+  app.post('/api/typing', isAuthenticated, async (req: any, res) => {
+    try {
+      const fromUserId = req.user?.id;
+      const { toUserId } = req.body;
+      
+      if (!toUserId) {
+        return res.status(400).json({ message: "toUserId required" });
+      }
+
+      const key = `${fromUserId}-${toUserId}`;
+      typingIndicators.set(key, { userId: fromUserId, expiresAt: Date.now() + 3000 });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting typing indicator:", error);
+      res.status(400).json({ message: "Failed to set typing indicator" });
+    }
+  });
+
+  app.get('/api/typing-status/:fromUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const toUserId = req.user?.id;
+      const { fromUserId } = req.params;
+      
+      const key = `${fromUserId}-${toUserId}`;
+      const typing = typingIndicators.get(key);
+      
+      // Clean up expired typing indicators
+      if (typing && typing.expiresAt < Date.now()) {
+        typingIndicators.delete(key);
+        return res.json({ isTyping: false });
+      }
+
+      res.json({ isTyping: !!typing });
+    } catch (error) {
+      console.error("Error getting typing status:", error);
+      res.status(400).json({ message: "Failed to get typing status" });
+    }
+  });
+
   app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
